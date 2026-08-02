@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Header from "@/components/Header";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
@@ -138,6 +138,57 @@ function AviatorPlaneIcon({
   );
 }
 
+function useSmoothMultiplier(multiplier: number, phase: Phase) {
+  const [smooth, setSmooth] = useState(multiplier);
+  const targetRef = useRef(multiplier);
+  const currentRef = useRef(multiplier);
+  const animFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    targetRef.current = multiplier;
+  }, [multiplier]);
+
+  useEffect(() => {
+    if (phase === "waiting") {
+      currentRef.current = 1.0;
+      targetRef.current = 1.0;
+      setSmooth(1.0);
+    } else if (phase === "crashed") {
+      currentRef.current = multiplier;
+      targetRef.current = multiplier;
+      setSmooth(multiplier);
+    }
+  }, [phase, multiplier]);
+
+  useEffect(() => {
+    if (phase !== "flying") return;
+
+    let running = true;
+    const update = () => {
+      if (!running) return;
+      const target = targetRef.current;
+      const diff = target - currentRef.current;
+
+      if (Math.abs(diff) > 0.0005) {
+        currentRef.current += diff * 0.18;
+        setSmooth(currentRef.current);
+      } else {
+        currentRef.current = target;
+        setSmooth(target);
+      }
+      animFrameRef.current = requestAnimationFrame(update);
+    };
+
+    animFrameRef.current = requestAnimationFrame(update);
+    return () => {
+      running = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [phase]);
+
+  return phase === "flying" ? smooth : multiplier;
+}
+
 function AviatorStageBackground({
   phase,
   multiplier,
@@ -147,26 +198,30 @@ function AviatorStageBackground({
   multiplier: number;
   crashPoint: number | null;
 }) {
+  const smoothMultiplier = useSmoothMultiplier(multiplier, phase);
+
   const isWaiting = phase === "waiting";
   const isCrashed = phase === "crashed";
-  const accent = isCrashed ? "#FF4757" : colorForMultiplier(multiplier).stroke;
+  const activeMultiplier = isWaiting ? 1.0 : isCrashed ? (crashPoint ?? multiplier) : smoothMultiplier;
+  const accent = isCrashed ? "#FF4757" : colorForMultiplier(activeMultiplier).stroke;
 
   // Fixed multiplier threshold for plane to reach top right of stage (e.g. 2.0x multiplier).
-  // Flight trajectory is fixed so users cannot predict or notice crash points from curve speed.
   const CLIMB_TARGET_MULTIPLIER = 2.0;
   const progress = isWaiting
     ? 0
-    : Math.min(Math.max((multiplier - 1) / (CLIMB_TARGET_MULTIPLIER - 1), 0), 1);
+    : Math.min(Math.max((activeMultiplier - 1) / (CLIMB_TARGET_MULTIPLIER - 1), 0), 1);
 
   const startX = 36;
   const startY = 248;
   const endX = startX + progress * 318;
-  const endY = startY - Math.pow(progress, 0.82) * 198;
-  const controlX = startX + progress * 150;
-  const controlY = startY - progress * 62;
+  // Reduced flight altitude: climbs 140px max (endY = 108) leaving top space clear
+  const endY = startY - Math.pow(progress, 0.88) * 140;
+  const controlX = startX + progress * 165;
+  const controlY = startY - progress * 40;
   const curvePath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
   const areaPath = `${curvePath} L ${endX} ${startY} L ${startX} ${startY} Z`;
-  const planeAngle = -16 - progress * 32;
+  // Reduced pitch angle for smoother level-flight look
+  const planeAngle = -10 - progress * 22;
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -303,19 +358,9 @@ export default function AviatorGame() {
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
   const [countdown, setCountdown] = useState<number>(5);
-  const [betAmount, setBetAmount] = useState<number>(100);
-  const [placedRoundId, setPlacedRoundId] = useState<string | null>(null);
-  const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
   const [shake, setShake] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [roundId, setRoundId] = useState<string | null>(null);
-  const [isBusy, setIsBusy] = useState(false);
-  const [feedback, setFeedback] = useState<string>("");
-
-  // Computed: User has an active bet for this round if placedRoundId matches active roundId
-  const isBetPlaced = Boolean(
-    placedRoundId && roundId && placedRoundId === roundId
-  );
 
   useEffect(() => {
     const socket = getSocket();
@@ -325,13 +370,7 @@ export default function AviatorGame() {
       if (typeof value.countdown === "number") setCountdown(value.countdown);
       setMultiplier(1.0);
       setCrashPoint(null);
-      if (value.roundId) {
-        setRoundId(value.roundId);
-        if (value.roundId !== placedRoundId) {
-          setCashedOutAt(null);
-          setFeedback("");
-        }
-      }
+      if (value.roundId) setRoundId(value.roundId);
     };
 
     const handleCountdown = (value: { roundId?: string; countdown: number }) => {
@@ -385,7 +424,7 @@ export default function AviatorGame() {
       socket.off("aviator:multiplier", handleMultiplier);
       socket.off("aviator:crashed", handleCrashed);
     };
-  }, [placedRoundId]);
+  }, []);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -421,6 +460,177 @@ export default function AviatorGame() {
     };
   }, []);
 
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  const mColor = colorForMultiplier(multiplier);
+
+  return (
+    <div className="min-h-screen w-full bg-[#0A0F1E] text-[#E7ECF6]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <style>{`
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+        .shake-anim { animation: shake 0.35s ease-in-out; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.65} }
+        .blink { animation: blink 1s ease-in-out infinite; }
+        @keyframes rise { from { transform: translateY(6px) } to { transform: translateY(0) } }
+        .rise { animation: rise 0.25s ease-out; }
+        @keyframes aviator-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes aviator-propeller-spin { 0%{ transform: scaleY(1); opacity: 0.9; } 50%{ transform: scaleY(-0.35); opacity: 0.4; } 100%{ transform: scaleY(1); opacity: 0.9; } }
+        .aviator-propeller { animation: aviator-propeller-spin 0.08s linear infinite; transform-origin: center; }
+        @keyframes aviator-thruster-flicker { 0%,100%{ transform: scaleX(1); opacity: 0.95; } 50%{ transform: scaleX(1.3); opacity: 0.65; } }
+        .aviator-thruster-flame { animation: aviator-thruster-flicker 0.12s ease-in-out infinite; transform-origin: right center; }
+      `}</style>
+
+      <Header query={query} setQuery={setQuery} />
+
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 space-y-2 sm:space-y-3">
+        {/* TOP MULTIPLIER BAR */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 sm:py-1.5 px-2 bg-[#121A2E] rounded-xl border border-[#22304A] scrollbar-none text-xs">
+          <span className="text-[#7C8AA8] font-semibold text-[10px] sm:text-xs uppercase tracking-wider pr-1">History</span>
+          {history.map((h, i) => {
+            const color = colorForMultiplier(h);
+            return (
+              <span
+                key={i}
+                className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-bold whitespace-nowrap bg-[#0D1424] border border-[#22304A] ${color.text}`}
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {h.toFixed(2)}x
+              </span>
+            );
+          })}
+        </div>
+
+        {/* MAIN GAME STAGE & DUAL BET CONTROL PANELS */}
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch">
+          {/* DUAL BET CONTROL PANELS (Left side on desktop lg screens; below stage on mobile) */}
+          <div className="order-2 lg:order-1 lg:w-[380px] xl:w-[420px] flex-shrink-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
+            <AviatorBetControlPanel
+              panelIndex={1}
+              phase={phase}
+              roundId={roundId}
+              multiplier={multiplier}
+              user={user}
+              token={token}
+              login={login}
+              defaultAmount={100}
+            />
+            <AviatorBetControlPanel
+              panelIndex={2}
+              phase={phase}
+              roundId={roundId}
+              multiplier={multiplier}
+              user={user}
+              token={token}
+              login={login}
+              defaultAmount={200}
+            />
+          </div>
+
+          {/* STAGE CONTAINER (Right side on desktop lg screens) */}
+          <div className="order-1 lg:order-2 flex-1 relative bg-[#070B15] border border-[#22304A] rounded-2xl overflow-hidden shadow-2xl min-h-[320px] sm:min-h-[440px] lg:min-h-[520px] flex flex-col justify-between p-3 sm:p-5">
+            <div className="flex justify-between items-center z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#FF4757] animate-pulse" />
+                <span className="text-xs sm:text-sm font-bold tracking-wider text-white uppercase" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Aviator Live
+                </span>
+              </div>
+              <button
+                onClick={toggleFullscreen}
+                className="text-xs bg-[#121A2E] border border-[#22304A] hover:bg-[#1c2947] text-[#C4CCE0] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+              >
+                {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              </button>
+            </div>
+
+            {/* STAGE ANIMATION CANVAS */}
+            <div className={`absolute inset-0 overflow-hidden ${shake ? "shake-anim" : ""}`}>
+              <AviatorStageBackground phase={phase} multiplier={multiplier} crashPoint={crashPoint} />
+            </div>
+
+            {/* MULTIPLIER / COUNTDOWN OVERLAY */}
+            <div className="relative z-10 flex-1 flex items-center justify-center pointer-events-none">
+              {phase === "waiting" ? (
+                <div className="text-center rise w-full">
+                  <p className="text-[#7C8AA8] text-xs sm:text-sm tracking-widest uppercase mb-2">Next round in</p>
+                  <h1
+                    className="text-5xl sm:text-7xl font-bold text-[#FFB020] tabular-nums blink leading-none"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {countdown}s
+                  </h1>
+                </div>
+              ) : (
+                <div className="text-center rise">
+                  <h1
+                    className={`text-6xl sm:text-8xl font-bold tabular-nums ${phase === "crashed" ? "text-[#FF4757]" : mColor.text}`}
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {multiplier.toFixed(2)}x
+                  </h1>
+                  <p className="mt-3 text-xs sm:text-sm tracking-widest uppercase text-[#7C8AA8]">
+                    {phase === "crashed" ? "Flew away" : "In flight"}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+interface BetPanelProps {
+  panelIndex: number;
+  phase: Phase;
+  roundId: string | null;
+  multiplier: number;
+  user: User | null;
+  token: string | null;
+  login: (token: string, user: User) => void;
+  defaultAmount?: number;
+}
+
+function AviatorBetControlPanel({
+  panelIndex,
+  phase,
+  roundId,
+  multiplier,
+  user,
+  token,
+  login,
+  defaultAmount = 100,
+}: BetPanelProps) {
+  const [betAmount, setBetAmount] = useState<number>(defaultAmount);
+  const [placedRoundId, setPlacedRoundId] = useState<string | null>(null);
+  const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
+  const [feedback, setFeedback] = useState<string>("");
+
+  const isBetPlaced = Boolean(
+    placedRoundId && roundId && placedRoundId === roundId
+  );
+
+  useEffect(() => {
+    if (phase === "waiting" && roundId && roundId !== placedRoundId) {
+      setCashedOutAt(null);
+      setFeedback("");
+    }
+  }, [phase, roundId, placedRoundId]);
+
   const handleBet = useCallback(async () => {
     if (phase !== "waiting" || isBetPlaced || isBusy) return;
     const activeToken = token || getToken();
@@ -443,7 +653,7 @@ export default function AviatorGame() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${activeToken}`,
         },
-        body: JSON.stringify({ amount: betAmount, roundId }),
+        body: JSON.stringify({ amount: betAmount, roundId, panelIndex }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to place bet");
@@ -451,22 +661,22 @@ export default function AviatorGame() {
       const targetRoundId = data.roundId || roundId;
       setPlacedRoundId(targetRoundId);
 
-      // Deduct bet amount from live user balance state
-      const nextBalance = typeof data.newBalance === "number"
-        ? data.newBalance
-        : Math.max(0, (user?.balance || 0) - betAmount);
+      const nextBalance =
+        typeof data.newBalance === "number"
+          ? data.newBalance
+          : Math.max(0, (user?.balance || 0) - betAmount);
 
       if (user) {
         login(activeToken, { ...user, balance: nextBalance });
       }
 
-      setFeedback(`Bet placed for KSh ${betAmount}.`);
+      setFeedback(`Bet #${panelIndex} placed for KSh ${betAmount}.`);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Unable to place bet.");
     } finally {
       setIsBusy(false);
     }
-  }, [phase, isBetPlaced, isBusy, token, user, betAmount, roundId, login]);
+  }, [phase, isBetPlaced, isBusy, token, user, betAmount, roundId, panelIndex, login]);
 
   const handleCashOut = useCallback(async () => {
     if (phase !== "flying" || !isBetPlaced || cashedOutAt || isBusy) return;
@@ -485,7 +695,7 @@ export default function AviatorGame() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${activeToken}`,
         },
-        body: JSON.stringify({ roundId: targetRoundId }),
+        body: JSON.stringify({ roundId: targetRoundId, panelIndex }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to cash out");
@@ -493,311 +703,140 @@ export default function AviatorGame() {
       const exitMultiplier = data.multiplier || multiplier;
       const payoutAmount = data.payout || Number((betAmount * exitMultiplier).toFixed(2));
 
-      // Credit cashout win payout to live user balance state
-      const nextBalance = typeof data.newBalance === "number"
-        ? data.newBalance
-        : (user?.balance || 0) + payoutAmount;
+      const nextBalance =
+        typeof data.newBalance === "number"
+          ? data.newBalance
+          : (user?.balance || 0) + payoutAmount;
 
       if (user) {
         login(activeToken, { ...user, balance: nextBalance });
       }
 
       setCashedOutAt(exitMultiplier);
-      setFeedback(`Cashed out at ${exitMultiplier.toFixed(2)}x · Won KSh ${payoutAmount.toLocaleString()}`);
+      setFeedback(`Cashed out #${panelIndex} at ${exitMultiplier.toFixed(2)}x · Won KSh ${payoutAmount.toLocaleString()}`);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Unable to cash out.");
     } finally {
       setIsBusy(false);
     }
-  }, [phase, isBetPlaced, cashedOutAt, isBusy, token, user, roundId, placedRoundId, multiplier, betAmount, login]);
-
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-      setIsFullscreen(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
-
-
-  const mColor = colorForMultiplier(multiplier);
+  }, [phase, isBetPlaced, cashedOutAt, isBusy, token, user, roundId, placedRoundId, panelIndex, multiplier, betAmount, login]);
 
   return (
-    <div className="min-h-screen w-full bg-[#0A0F1E] text-[#E7ECF6]" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <style>{`
-        @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
-        .shake-anim { animation: shake 0.35s ease-in-out; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.65} }
-        .blink { animation: blink 1s ease-in-out infinite; }
-        @keyframes rise { from { transform: translateY(6px) } to { transform: translateY(0) } }
-        .rise { animation: rise 0.25s ease-out; }
-        @keyframes aviator-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-        @keyframes aviator-sun-pulse { 0%,100%{ opacity: 0.55; transform: translate(-50%, -50%) scale(1); } 50%{ opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); } }
-        @keyframes aviator-stars-drift { from { transform: translateY(0); } to { transform: translateY(-120px); } }
-        @keyframes aviator-plane-idle { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-4px); } }
-        @keyframes aviator-plane-live { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-2px); } }
-        @keyframes aviator-plane-crash { 0%{ transform: translate(0, 0); opacity: 1; } 100%{ transform: translate(36px, -28px); opacity: 0.2; } }
-        @keyframes aviator-crash-flash { 0%{ opacity: 0.45; } 100%{ opacity: 0; } }
-        @keyframes aviator-propeller-spin { 0%{ transform: scaleY(1); opacity: 0.9; } 50%{ transform: scaleY(-0.35); opacity: 0.4; } 100%{ transform: scaleY(1); opacity: 0.9; } }
-        .aviator-propeller { animation: aviator-propeller-spin 0.08s linear infinite; transform-origin: center; }
-        @keyframes aviator-thruster-flicker { 0%,100%{ transform: scaleX(1); opacity: 0.95; } 50%{ transform: scaleX(1.3); opacity: 0.65; } }
-        .aviator-thruster-flame { animation: aviator-thruster-flicker 0.1s ease-in-out infinite; transform-origin: -22px 0px; }
-        @keyframes aviator-curve-draw { from { stroke-dashoffset: 420; } to { stroke-dashoffset: 0; } }
-        .aviator-sun {
-          position: absolute;
-          left: 50%;
-          top: 58%;
-          width: min(72vw, 420px);
-          height: min(72vw, 420px);
-          transform: translate(-50%, -50%);
-          border-radius: 9999px;
-          background: radial-gradient(circle, rgba(255, 176, 32, 0.22) 0%, rgba(255, 80, 40, 0.12) 38%, transparent 72%);
-          filter: blur(2px);
-        }
-        .aviator-sun-waiting { animation: aviator-sun-pulse 1.8s ease-in-out infinite; }
-        .aviator-sun-crashed {
-          background: radial-gradient(circle, rgba(255, 71, 87, 0.28) 0%, rgba(120, 20, 30, 0.12) 42%, transparent 72%);
-        }
-        .aviator-rays {
-          position: absolute;
-          left: 50%;
-          top: 58%;
-          width: min(95vw, 560px);
-          height: min(95vw, 560px);
-          transform: translate(-50%, -50%);
-          animation: aviator-spin 24s linear infinite;
-          opacity: 0.75;
-        }
-        .aviator-rays-fast { animation-duration: 10s; opacity: 0.9; }
-        .aviator-rays-crashed { animation-duration: 6s; opacity: 0.55; }
-        .aviator-stars {
-          position: absolute;
-          inset: 0;
-          background-image:
-            radial-gradient(circle at 12% 18%, rgba(255,255,255,0.35) 0 1px, transparent 1px),
-            radial-gradient(circle at 28% 72%, rgba(255,255,255,0.18) 0 1px, transparent 1px),
-            radial-gradient(circle at 44% 34%, rgba(255,255,255,0.22) 0 1px, transparent 1px),
-            radial-gradient(circle at 63% 16%, rgba(255,255,255,0.16) 0 1px, transparent 1px),
-            radial-gradient(circle at 78% 58%, rgba(255,255,255,0.24) 0 1px, transparent 1px),
-            radial-gradient(circle at 88% 28%, rgba(255,255,255,0.14) 0 1px, transparent 1px);
-          animation: aviator-stars-drift 18s linear infinite;
-          opacity: 0.35;
-        }
-        .aviator-plane-idle { animation: aviator-plane-idle 1.4s ease-in-out infinite; transform-origin: center; }
-        .aviator-plane-live { animation: aviator-plane-live 0.9s ease-in-out infinite; transform-origin: center; }
-        .aviator-plane-crash { animation: aviator-plane-crash 0.55s ease-out forwards; transform-origin: center; }
-        .aviator-curve-live { stroke-dasharray: 420; stroke-dashoffset: 0; transition: d 0.15s linear; }
-        .aviator-curve-crash { stroke: #FF4757; filter: drop-shadow(0 0 8px rgba(255,71,87,0.65)); }
-        .aviator-crash-flash {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at 58% 62%, rgba(255,71,87,0.35), transparent 62%);
-          animation: aviator-crash-flash 0.55s ease-out forwards;
-          pointer-events: none;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .blink, .rise, .aviator-rays, .aviator-stars, .aviator-sun-waiting, .aviator-plane-idle, .aviator-plane-live, .aviator-plane-crash, .aviator-crash-flash { animation: none; }
-        }
-        ::-webkit-scrollbar { height: 5px; width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #22304A; border-radius: 4px; }
-      `}</style>
+    <div className="bg-[#121A2E] rounded-2xl p-3 sm:p-4 border border-[#22304A]">
+      <div className="flex justify-between items-center mb-2">
+        <label className="text-xs uppercase tracking-wide text-[#7C8AA8] font-bold">
+          Bet Panel {panelIndex}
+        </label>
+        {isBetPlaced && (
+          <span className="text-xs font-semibold text-[#22D67A] bg-[#22D67A]/10 px-2.5 py-0.5 rounded-full border border-[#22D67A]/30">
+            Active Bet
+          </span>
+        )}
+      </div>
 
-      <Header query={query} setQuery={setQuery} />
+      <div className="flex items-center bg-[#0D1424] rounded-xl p-1 sm:p-1.5 border border-[#22304A]">
+        <button
+          onClick={() => setBetAmount((a) => Math.max(10, a - 10))}
+          disabled={isBetPlaced || phase !== "waiting"}
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
+        >
+          −
+        </button>
+        <input
+          className="bg-transparent flex-1 text-center outline-none text-lg sm:text-xl font-bold tabular-nums text-white"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          value={betAmount}
+          readOnly
+        />
+        <button
+          onClick={() => setBetAmount((a) => a + 10)}
+          disabled={isBetPlaced || phase !== "waiting"}
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
+        >
+          +
+        </button>
+      </div>
 
-      <main className="max-w-7xl mx-auto p-2 sm:p-4">
-        <div className="bg-[#121A2E] rounded-2xl p-2 sm:p-2.5 mb-3 border border-[#22304A]">
-          <div className="flex gap-1 sm:gap-1.5 overflow-x-auto pb-0.5">
-            {history.map((item, index) => {
-              const c = colorForMultiplier(item);
-              return (
-                <div
-                  key={`${item}-${index}`}
-                  className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full whitespace-nowrap text-[11px] sm:text-xs font-semibold border border-white/10 ${c.bg} bg-opacity-20 text-white`}
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  {item.toFixed(2)}x
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="flex gap-1.5 sm:gap-2 mt-2">
+        {[100, 200, 500, 1000].map((v) => (
+          <button
+            key={v}
+            onClick={() => !isBetPlaced && phase === "waiting" && setBetAmount(v)}
+            disabled={isBetPlaced || phase !== "waiting"}
+            className="flex-1 text-xs py-1 sm:py-1.5 rounded-lg bg-[#0D1424] border border-[#22304A] text-[#7C8AA8] hover:text-white disabled:opacity-40"
+          >
+            {v}
+          </button>
+        ))}
+      </div>
 
-        <div className="grid lg:grid-cols-[320px_1fr] gap-2 sm:gap-3">
-          <div className="order-1 lg:order-2 bg-[#121A2E] rounded-2xl border border-[#22304A] overflow-hidden">
-            <div
-              className={`relative h-[280px] xs:h-[320px] sm:h-[420px] lg:h-[520px] overflow-hidden ${shake ? "shake-anim" : ""}`}
-            >
-              <AviatorStageBackground phase={phase} multiplier={multiplier} crashPoint={crashPoint} />
+      {phase === "waiting" ? (
+        <button
+          onClick={handleBet}
+          disabled={isBetPlaced || isBusy}
+          className={`mt-3.5 sm:mt-4 w-full transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg flex items-center justify-center gap-2 ${
+            isBetPlaced
+              ? "bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] cursor-not-allowed"
+              : "bg-[#FFB020] hover:bg-[#F0A415] text-[#0A0F1E] disabled:opacity-50"
+          }`}
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          {isBusy ? (
+            <span>Placing Bet...</span>
+          ) : isBetPlaced ? (
+            <span>✓ Bet Placed (KSh {betAmount})</span>
+          ) : (
+            <span>Place Bet · KSh {betAmount}</span>
+          )}
+        </button>
+      ) : phase === "flying" ? (
+        isBetPlaced && !cashedOutAt ? (
+          <button
+            onClick={handleCashOut}
+            disabled={isBusy}
+            className="mt-3.5 sm:mt-4 w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg text-[#0A0F1E] shadow-lg shadow-[#22D67A]/20 flex items-center justify-center gap-2"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            {isBusy ? <span>Cashing Out...</span> : <span>Cash Out @ {multiplier.toFixed(2)}x</span>}
+          </button>
+        ) : cashedOutAt ? (
+          <button
+            disabled
+            className="mt-3.5 sm:mt-4 w-full bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            ✓ Cashed Out @ {cashedOutAt.toFixed(2)}x
+          </button>
+        ) : (
+          <button
+            disabled
+            className="mt-3.5 sm:mt-4 w-full bg-[#1A2338] text-[#7C8AA8] border border-[#22304A] rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            In Flight
+          </button>
+        )
+      ) : (
+        <button
+          disabled
+          className="mt-3.5 sm:mt-4 w-full bg-[#1A2338] text-[#FF4757] border border-[#FF4757]/30 rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          Flew Away @ {multiplier.toFixed(2)}x
+        </button>
+      )}
 
-              <div className="absolute inset-0 z-10 flex flex-col justify-center items-center pointer-events-none px-4">
-                {phase === "waiting" ? (
-                  <div className="text-center rise w-full">
-                    <p className="text-[#7C8AA8] text-xs sm:text-sm tracking-widest uppercase mb-2">Next round in</p>
-                    <h1
-                      className="text-5xl sm:text-7xl font-bold text-[#FFB020] tabular-nums blink leading-none"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      {countdown}s
-                    </h1>
-                  </div>
-                ) : (
-                  <div className="text-center rise">
-                    <h1
-                      className={`text-6xl sm:text-8xl font-bold tabular-nums ${phase === "crashed" ? "text-[#FF4757]" : mColor.text}`}
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      {multiplier.toFixed(2)}x
-                    </h1>
-                    <p className="mt-3 text-xs sm:text-sm tracking-widest uppercase text-[#7C8AA8]">
-                      {phase === "crashed" ? "Flew away" : "In flight"}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="order-2 lg:order-1 space-y-2 sm:space-y-3">
-            {phase === "waiting" && (
-              <div className="lg:hidden bg-[#121A2E] rounded-2xl p-3 border border-[#22304A] text-center">
-                <p className="text-[#7C8AA8] text-xs uppercase tracking-widest mb-1">Next round in</p>
-                <p className="text-3xl font-bold text-[#FFB020] tabular-nums" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  {countdown}s
-                </p>
-              </div>
-            )}
-
-            <div className="bg-[#121A2E] rounded-2xl p-3 sm:p-4 border border-[#22304A]">
-              <label className="text-xs uppercase tracking-wide text-[#7C8AA8]">Bet Amount</label>
-              <div className="flex items-center bg-[#0D1424] rounded-xl mt-2 p-1 sm:p-1.5 border border-[#22304A]">
-                <button
-                  onClick={() => setBetAmount((a) => Math.max(10, a - 10))}
-                  disabled={isBetPlaced || phase !== "waiting"}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
-                >
-                  −
-                </button>
-                <input
-                  className="bg-transparent flex-1 text-center outline-none text-lg sm:text-xl font-bold tabular-nums"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  value={betAmount}
-                  readOnly
-                />
-                <button
-                  onClick={() => setBetAmount((a) => a + 10)}
-                  disabled={isBetPlaced || phase !== "waiting"}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
-                >
-                  +
-                </button>
-              </div>
-
-              <div className="flex gap-1.5 sm:gap-2 mt-2">
-                {[100, 500, 1000].map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => !isBetPlaced && phase === "waiting" && setBetAmount(v)}
-                    disabled={isBetPlaced || phase !== "waiting"}
-                    className="flex-1 text-xs py-1 sm:py-1.5 rounded-lg bg-[#0D1424] border border-[#22304A] text-[#7C8AA8] hover:text-white disabled:opacity-40"
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-
-              {phase === "waiting" ? (
-                <button
-                  onClick={handleBet}
-                  disabled={isBetPlaced || isBusy}
-                  className={`mt-4 sm:mt-5 w-full transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg flex items-center justify-center gap-2 ${isBetPlaced
-                    ? "bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] cursor-not-allowed"
-                    : "bg-[#FFB020] hover:bg-[#F0A415] text-[#0A0F1E] disabled:opacity-50"
-                    }`}
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  {isBusy ? (
-                    <span>Placing Bet...</span>
-                  ) : isBetPlaced ? (
-                    <span>✓ Bet Placed (KSh {betAmount}) · Waiting for takeoff</span>
-                  ) : (
-                    <span>Place Bet · KSh {betAmount}</span>
-                  )}
-                </button>
-              ) : phase === "flying" ? (
-                isBetPlaced && !cashedOutAt ? (
-                  <button
-                    onClick={handleCashOut}
-                    disabled={isBusy}
-                    className="mt-4 sm:mt-5 w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg text-[#0A0F1E] shadow-lg shadow-[#22D67A]/20 flex items-center justify-center gap-2"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    {isBusy ? <span>Cashing Out...</span> : <span>Cash Out @ {multiplier.toFixed(2)}x</span>}
-                  </button>
-                ) : cashedOutAt ? (
-                  <button
-                    disabled
-                    className="mt-4 sm:mt-5 w-full bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    ✓ Cashed Out @ {cashedOutAt.toFixed(2)}x
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="mt-4 sm:mt-5 w-full bg-[#1A2338] text-[#7C8AA8] border border-[#22304A] rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    In Flight · Waiting for Next Round
-                  </button>
-                )
-              ) : (
-                <button
-                  disabled
-                  className="mt-4 sm:mt-5 w-full bg-[#1A2338] text-[#FF4757] border border-[#FF4757]/30 rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  Flew Away @ {multiplier.toFixed(2)}x
-                </button>
-              )}
-
-              {feedback ? <p className="mt-3 text-center text-sm text-[#C4CCE0]">{feedback}</p> : null}
-              {cashedOutAt && (
-                <p className="mt-3 text-center text-sm text-[#22D67A] font-semibold rise">
-                  Cashed out at {cashedOutAt.toFixed(2)}x · won KSh {(betAmount * cashedOutAt).toFixed(2)}
-                </p>
-              )}
-              {phase === "crashed" && isBetPlaced && !cashedOutAt && (
-                <p className="mt-3 text-center text-sm text-[#FF4757] font-semibold rise">
-                  Missed the exit — lost KSh {betAmount}
-                </p>
-              )}
-            </div>
-
-            <div className="bg-[#121A2E] rounded-2xl p-3 sm:p-4 border border-[#22304A]">
-              <h3 className="font-semibold mb-2 sm:mb-3 text-sm text-[#C4CCE0]">Round Status</h3>
-              <p className="text-sm text-[#7C8AA8]">Round: {roundId || "—"}</p>
-              <p className="text-sm text-[#7C8AA8]">Crash point: {crashPoint ? `${crashPoint.toFixed(2)}x` : "—"}</p>
-            </div>
-          </div>
-        </div>
-      </main>
+      {feedback ? <p className="mt-2 text-center text-xs text-[#C4CCE0]">{feedback}</p> : null}
+      {cashedOutAt && (
+        <p className="mt-2 text-center text-xs text-[#22D67A] font-semibold rise">
+          Won KSh {(betAmount * cashedOutAt).toFixed(2)}
+        </p>
+      )}
+      {phase === "crashed" && isBetPlaced && !cashedOutAt && (
+        <p className="mt-2 text-center text-xs text-[#FF4757] font-semibold rise">
+          Lost KSh {betAmount}
+        </p>
+      )}
     </div>
   );
 }
