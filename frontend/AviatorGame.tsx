@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
 import { getSocket } from "./socketClient";
+import { useAuth } from "@/components/AuthProvider";
 
 const FONT_LINK_ID = "aviator-fonts";
 
@@ -295,6 +296,7 @@ interface HistoryItem {
 
 export default function AviatorGame() {
   useFonts();
+  const { user, token, login } = useAuth();
   const [query, setQuery] = useState("");
   const [phase, setPhase] = useState<Phase>("waiting");
   const [multiplier, setMultiplier] = useState<number>(1.0);
@@ -302,7 +304,7 @@ export default function AviatorGame() {
   const [history, setHistory] = useState<number[]>([]);
   const [countdown, setCountdown] = useState<number>(5);
   const [betAmount, setBetAmount] = useState<number>(100);
-  const [betPlaced, setBetPlaced] = useState<boolean>(false);
+  const [placedRoundId, setPlacedRoundId] = useState<string | null>(null);
   const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
   const [shake, setShake] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -310,54 +312,80 @@ export default function AviatorGame() {
   const [isBusy, setIsBusy] = useState(false);
   const [feedback, setFeedback] = useState<string>("");
 
+  // Computed: User has an active bet for this round if placedRoundId matches active roundId
+  const isBetPlaced = Boolean(
+    placedRoundId && roundId && placedRoundId === roundId
+  );
+
   useEffect(() => {
     const socket = getSocket();
 
-    const handleState = (value: Partial<LiveState>) => {
-      const nextPhase = (value.phase || "waiting") as Phase;
-      setPhase(nextPhase);
-      setCountdown(value.countdown ?? 5);
-      setMultiplier(value.multiplier ?? 1);
-      setCrashPoint(value.crashPoint ?? null);
-      setRoundId(value.roundId ?? null);
-
-      if (nextPhase === "waiting") {
-        setBetPlaced(false);
-        setCashedOutAt(null);
-        setFeedback("");
+    const handleWaiting = (value: Partial<LiveState>) => {
+      setPhase("waiting");
+      if (typeof value.countdown === "number") setCountdown(value.countdown);
+      setMultiplier(1.0);
+      setCrashPoint(null);
+      if (value.roundId) {
+        setRoundId(value.roundId);
+        if (value.roundId !== placedRoundId) {
+          setCashedOutAt(null);
+          setFeedback("");
+        }
       }
+    };
 
-      if (nextPhase === "crashed") {
-        setShake(true);
-        setTimeout(() => setShake(false), 400);
-      }
+    const handleCountdown = (value: { roundId?: string; countdown: number }) => {
+      setPhase("waiting");
+      setCountdown(value.countdown);
+      if (value.roundId) setRoundId(value.roundId);
+    };
+
+    const handleStarted = (value: Partial<LiveState>) => {
+      setPhase("flying");
+      setMultiplier(value.multiplier ?? 1.0);
+      if (value.crashPoint) setCrashPoint(value.crashPoint);
+      if (value.roundId) setRoundId(value.roundId);
+    };
+
+    const handleMultiplier = (value: Partial<LiveState>) => {
+      setPhase("flying");
+      setMultiplier(value.multiplier ?? 1.0);
+      if (value.roundId) setRoundId(value.roundId);
     };
 
     const handleCrashed = (value: Partial<LiveState>) => {
       setPhase("crashed");
-      setMultiplier(value.crashPoint ?? 1);
+      setMultiplier(value.crashPoint ?? 1.0);
       setCrashPoint(value.crashPoint ?? null);
-      setRoundId(value.roundId ?? null);
+      if (value.roundId) setRoundId(value.roundId);
       setShake(true);
       setTimeout(() => setShake(false), 400);
     };
 
+    const handleState = (value: Partial<LiveState>) => {
+      if (value.phase) setPhase(value.phase as Phase);
+      if (typeof value.countdown === "number") setCountdown(value.countdown);
+      if (typeof value.multiplier === "number") setMultiplier(value.multiplier);
+      if (typeof value.crashPoint === "number") setCrashPoint(value.crashPoint);
+      if (value.roundId) setRoundId(value.roundId);
+    };
+
     socket.on("aviator:state", handleState);
-    socket.on("aviator:waiting", handleState);
-    socket.on("aviator:started", handleState);
-    socket.on("aviator:multiplier", handleState);
-    socket.on("aviator:countdown", handleState);
+    socket.on("aviator:waiting", handleWaiting);
+    socket.on("aviator:countdown", handleCountdown);
+    socket.on("aviator:started", handleStarted);
+    socket.on("aviator:multiplier", handleMultiplier);
     socket.on("aviator:crashed", handleCrashed);
 
     return () => {
       socket.off("aviator:state", handleState);
-      socket.off("aviator:waiting", handleState);
-      socket.off("aviator:started", handleState);
-      socket.off("aviator:multiplier", handleState);
-      socket.off("aviator:countdown", handleState);
+      socket.off("aviator:waiting", handleWaiting);
+      socket.off("aviator:countdown", handleCountdown);
+      socket.off("aviator:started", handleStarted);
+      socket.off("aviator:multiplier", handleMultiplier);
       socket.off("aviator:crashed", handleCrashed);
     };
-  }, []);
+  }, [placedRoundId]);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -394,19 +422,18 @@ export default function AviatorGame() {
   }, []);
 
   const handleBet = useCallback(async () => {
-    if (phase !== "waiting" || betPlaced || isBusy) return;
-    const token = getToken();
-    if (!token) {
+    if (phase !== "waiting" || isBetPlaced || isBusy) return;
+    const activeToken = token || getToken();
+    if (!activeToken) {
       setFeedback("Please log in to place a bet.");
       return;
     }
 
-    console.debug("[Aviator] placing bet", {
-      amount: betAmount,
-      roundId,
-      phase,
-      currentStatus: { betPlaced, cashedOutAt, isBusy },
-    });
+    if (user && typeof user.balance === "number" && user.balance < betAmount) {
+      setFeedback(`Insufficient balance. You need KSh ${betAmount}.`);
+      return;
+    }
+
     setIsBusy(true);
     setFeedback("");
     try {
@@ -414,57 +441,75 @@ export default function AviatorGame() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${activeToken}`,
         },
         body: JSON.stringify({ amount: betAmount, roundId }),
       });
       const data = await response.json();
-      console.debug("[Aviator] bet response", { status: response.status, data });
       if (!response.ok) throw new Error(data.message || "Unable to place bet");
-      setBetPlaced(true);
+
+      const targetRoundId = data.roundId || roundId;
+      setPlacedRoundId(targetRoundId);
+
+      // Deduct bet amount from live user balance state
+      const nextBalance = typeof data.newBalance === "number"
+        ? data.newBalance
+        : Math.max(0, (user?.balance || 0) - betAmount);
+
+      if (user) {
+        login(activeToken, { ...user, balance: nextBalance });
+      }
+
       setFeedback(`Bet placed for KSh ${betAmount}.`);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Unable to place bet.");
     } finally {
       setIsBusy(false);
     }
-  }, [phase, betPlaced, isBusy, betAmount, roundId]);
+  }, [phase, isBetPlaced, isBusy, token, user, betAmount, roundId, login]);
 
   const handleCashOut = useCallback(async () => {
-    if (phase !== "flying" || !betPlaced || cashedOutAt || isBusy) return;
-    const token = getToken();
-    if (!token) {
+    if (phase !== "flying" || !isBetPlaced || cashedOutAt || isBusy) return;
+    const activeToken = token || getToken();
+    if (!activeToken) {
       setFeedback("Please log in to cash out.");
       return;
     }
 
-    console.debug("[Aviator] cashing out", {
-      roundId,
-      phase,
-      multiplier,
-      currentStatus: { betPlaced, cashedOutAt, isBusy },
-    });
     setIsBusy(true);
     try {
+      const targetRoundId = roundId || placedRoundId;
       const response = await fetch(`${API_URL}/aviator/cashout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${activeToken}`,
         },
-        body: JSON.stringify({ roundId }),
+        body: JSON.stringify({ roundId: targetRoundId }),
       });
       const data = await response.json();
-      console.debug("[Aviator] cashout response", { status: response.status, data });
       if (!response.ok) throw new Error(data.message || "Unable to cash out");
-      setCashedOutAt(multiplier);
-      setFeedback(`Cashed out at ${multiplier.toFixed(2)}x.`);
+
+      const exitMultiplier = data.multiplier || multiplier;
+      const payoutAmount = data.payout || Number((betAmount * exitMultiplier).toFixed(2));
+
+      // Credit cashout win payout to live user balance state
+      const nextBalance = typeof data.newBalance === "number"
+        ? data.newBalance
+        : (user?.balance || 0) + payoutAmount;
+
+      if (user) {
+        login(activeToken, { ...user, balance: nextBalance });
+      }
+
+      setCashedOutAt(exitMultiplier);
+      setFeedback(`Cashed out at ${exitMultiplier.toFixed(2)}x · Won KSh ${payoutAmount.toLocaleString()}`);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Unable to cash out.");
     } finally {
       setIsBusy(false);
     }
-  }, [phase, betPlaced, cashedOutAt, isBusy, multiplier, roundId]);
+  }, [phase, isBetPlaced, cashedOutAt, isBusy, token, user, roundId, placedRoundId, multiplier, betAmount, login]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -490,13 +535,7 @@ export default function AviatorGame() {
     };
   }, []);
 
-  useEffect(() => {
-    if (phase === "waiting") {
-      setBetPlaced(false);
-      setCashedOutAt(null);
-      setFeedback("");
-    }
-  }, [phase]);
+
 
   const mColor = colorForMultiplier(multiplier);
 
@@ -650,7 +689,7 @@ export default function AviatorGame() {
               <div className="flex items-center bg-[#0D1424] rounded-xl mt-2 p-1 sm:p-1.5 border border-[#22304A]">
                 <button
                   onClick={() => setBetAmount((a) => Math.max(10, a - 10))}
-                  disabled={betPlaced || phase !== "waiting"}
+                  disabled={isBetPlaced || phase !== "waiting"}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
                 >
                   −
@@ -663,7 +702,7 @@ export default function AviatorGame() {
                 />
                 <button
                   onClick={() => setBetAmount((a) => a + 10)}
-                  disabled={betPlaced || phase !== "waiting"}
+                  disabled={isBetPlaced || phase !== "waiting"}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
                 >
                   +
@@ -674,8 +713,8 @@ export default function AviatorGame() {
                 {[100, 500, 1000].map((v) => (
                   <button
                     key={v}
-                    onClick={() => !betPlaced && phase === "waiting" && setBetAmount(v)}
-                    disabled={betPlaced || phase !== "waiting"}
+                    onClick={() => !isBetPlaced && phase === "waiting" && setBetAmount(v)}
+                    disabled={isBetPlaced || phase !== "waiting"}
                     className="flex-1 text-xs py-1 sm:py-1.5 rounded-lg bg-[#0D1424] border border-[#22304A] text-[#7C8AA8] hover:text-white disabled:opacity-40"
                   >
                     {v}
@@ -683,22 +722,58 @@ export default function AviatorGame() {
                 ))}
               </div>
 
-              {phase === "flying" && betPlaced && !cashedOutAt ? (
-                <button
-                  onClick={handleCashOut}
-                  className="mt-4 sm:mt-5 w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition rounded-xl py-3 sm:py-4 font-bold text-base sm:text-lg text-[#0A0F1E]"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
-                  Cash Out @ {multiplier.toFixed(2)}x
-                </button>
-              ) : (
+              {phase === "waiting" ? (
                 <button
                   onClick={handleBet}
-                  disabled={phase !== "waiting" || betPlaced || isBusy}
-                  className="mt-4 sm:mt-5 w-full bg-[#FFB020] hover:bg-[#F0A415] disabled:bg-[#3a3220] disabled:text-[#7C8AA8] transition rounded-xl py-3 sm:py-4 font-bold text-base sm:text-lg text-[#0A0F1E] disabled:cursor-not-allowed"
+                  disabled={isBetPlaced || isBusy}
+                  className={`mt-4 sm:mt-5 w-full transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg flex items-center justify-center gap-2 ${isBetPlaced
+                    ? "bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] cursor-not-allowed"
+                    : "bg-[#FFB020] hover:bg-[#F0A415] text-[#0A0F1E] disabled:opacity-50"
+                    }`}
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
-                  {betPlaced ? "Bet Placed — Waiting" : `Place Bet · KSh ${betAmount}`}
+                  {isBusy ? (
+                    <span>Placing Bet...</span>
+                  ) : isBetPlaced ? (
+                    <span>✓ Bet Placed (KSh {betAmount}) · Waiting for takeoff</span>
+                  ) : (
+                    <span>Place Bet · KSh {betAmount}</span>
+                  )}
+                </button>
+              ) : phase === "flying" ? (
+                isBetPlaced && !cashedOutAt ? (
+                  <button
+                    onClick={handleCashOut}
+                    disabled={isBusy}
+                    className="mt-4 sm:mt-5 w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg text-[#0A0F1E] shadow-lg shadow-[#22D67A]/20 flex items-center justify-center gap-2"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {isBusy ? <span>Cashing Out...</span> : <span>Cash Out @ {multiplier.toFixed(2)}x</span>}
+                  </button>
+                ) : cashedOutAt ? (
+                  <button
+                    disabled
+                    className="mt-4 sm:mt-5 w-full bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    ✓ Cashed Out @ {cashedOutAt.toFixed(2)}x
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="mt-4 sm:mt-5 w-full bg-[#1A2338] text-[#7C8AA8] border border-[#22304A] rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    In Flight · Waiting for Next Round
+                  </button>
+                )
+              ) : (
+                <button
+                  disabled
+                  className="mt-4 sm:mt-5 w-full bg-[#1A2338] text-[#FF4757] border border-[#FF4757]/30 rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg cursor-not-allowed text-center"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  Flew Away @ {multiplier.toFixed(2)}x
                 </button>
               )}
 
@@ -708,7 +783,7 @@ export default function AviatorGame() {
                   Cashed out at {cashedOutAt.toFixed(2)}x · won KSh {(betAmount * cashedOutAt).toFixed(2)}
                 </p>
               )}
-              {phase === "crashed" && betPlaced && !cashedOutAt && (
+              {phase === "crashed" && isBetPlaced && !cashedOutAt && (
                 <p className="mt-3 text-center text-sm text-[#FF4757] font-semibold rise">
                   Missed the exit — lost KSh {betAmount}
                 </p>
