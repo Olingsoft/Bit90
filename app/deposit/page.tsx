@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import Header from "@/components/Header"; // Reusing your existing Header component
+import { useState, useEffect } from "react";
+import Header from "@/components/Header";
+import { useAuth } from "@/components/AuthProvider";
+import { getToken } from "@/lib/auth";
+import { API_URL } from "@/lib/api";
 
 const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 
 export default function DepositPage() {
+  const { user, token, login } = useAuth();
   const [query, setQuery] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState<number | "">(500);
@@ -15,25 +19,78 @@ export default function DepositPage() {
     message: "",
   });
 
+  useEffect(() => {
+    if (user?.phone) {
+      // Strip +254 or 254 if present to populate input field cleanly
+      const rawDigits = user.phone.replace(/\D/g, "");
+      const cleanLocal = rawDigits.startsWith("254") ? rawDigits.slice(3) : rawDigits;
+      setPhone(cleanLocal);
+    }
+  }, [user]);
+
   const handleQuickAmount = (val: number) => {
     setAmount(val);
   };
 
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || !amount) return;
+    if (!phone || !amount || Number(amount) <= 0) return;
 
     setIsLoading(true);
     setStatus({ type: "", message: "" });
 
-    // Mock STK Push request simulation
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const activeToken = token || getToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (activeToken) {
+        headers["Authorization"] = `Bearer ${activeToken}`;
+      }
+
+      const formattedPhone = phone.startsWith("+")
+        ? phone
+        : phone.startsWith("254")
+        ? `+${phone}`
+        : `+254${phone.replace(/^0/, "")}`;
+
+      const res = await fetch(`${API_URL}/users/deposit`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          phone: formattedPhone,
+          amount: Number(amount),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to process deposit");
+      }
+
+      // Update user balance in AuthContext and LocalStorage
+      if (user && data.user) {
+        login(activeToken || "", {
+          ...user,
+          balance: data.user.balance,
+        });
+      }
+
       setStatus({
         type: "success",
-        message: `STK Push sent to ${phone}. Check your phone to complete payment of KSh ${amount}.`,
+        message: `Deposit of KSh ${Number(amount).toLocaleString()} successful! New Balance: KSh ${Number(
+          data.balance
+        ).toLocaleString()}`,
       });
-    }, 1500);
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "Deposit failed. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
