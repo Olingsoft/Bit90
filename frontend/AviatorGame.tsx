@@ -736,22 +736,31 @@ function AviatorBetControlPanel({
 
       <div className="flex items-center bg-[#0D1424] rounded-xl p-1 sm:p-1.5 border border-[#22304A]">
         <button
-          onClick={() => setBetAmount((a) => Math.max(10, a - 10))}
+          onClick={() => setBetAmount((a) => Math.max(10, (a || 0) - 10))}
           disabled={isBetPlaced || phase !== "waiting"}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg cursor-pointer"
         >
           −
         </button>
         <input
-          className="bg-transparent flex-1 text-center outline-none text-lg sm:text-xl font-bold tabular-nums text-white"
+          type="number"
+          min={10}
+          disabled={isBetPlaced || phase !== "waiting"}
+          className="bg-transparent flex-1 text-center outline-none text-lg sm:text-xl font-bold tabular-nums text-white disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          value={betAmount}
-          readOnly
+          value={betAmount === 0 ? "" : betAmount}
+          onChange={(e) => {
+            const val = parseInt(e.target.value, 10);
+            setBetAmount(isNaN(val) ? 0 : val);
+          }}
+          onBlur={() => {
+            if (!betAmount || betAmount < 1) setBetAmount(10);
+          }}
         />
         <button
-          onClick={() => setBetAmount((a) => a + 10)}
+          onClick={() => setBetAmount((a) => (a || 0) + 10)}
           disabled={isBetPlaced || phase !== "waiting"}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg cursor-pointer"
         >
           +
         </button>
