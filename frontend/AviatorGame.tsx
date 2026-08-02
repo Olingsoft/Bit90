@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { onValue, ref, query as dbQuery, orderByChild, limitToLast } from "firebase/database";
-import { rtdb } from "./firebaseClient";
 import Header from "@/components/Header";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
+import { getSocket } from "./socketClient";
 
 const FONT_LINK_ID = "aviator-fonts";
 
@@ -66,25 +65,10 @@ export default function AviatorGame() {
   const [feedback, setFeedback] = useState<string>("");
 
   useEffect(() => {
-    const liveRef = ref(rtdb, "aviator/live");
-    const unsubscribe = onValue(liveRef, (snapshot) => {
-      const value = snapshot.val() as LiveState | null;
-      if (!value) return;
+    const socket = getSocket();
 
+    const handleState = (value: Partial<LiveState>) => {
       const nextPhase = (value.phase || "waiting") as Phase;
-      console.debug("[Aviator] live state", {
-        phase: nextPhase,
-        countdown: value.countdown ?? 5,
-        multiplier: value.multiplier ?? 1,
-        roundId: value.roundId ?? null,
-        crashPoint: value.crashPoint ?? null,
-        localStatus: {
-          betPlaced,
-          cashedOutAt,
-          isBusy,
-          feedback,
-        },
-      });
       setPhase(nextPhase);
       setCountdown(value.countdown ?? 5);
       setMultiplier(value.multiplier ?? 1);
@@ -101,27 +85,66 @@ export default function AviatorGame() {
         setShake(true);
         setTimeout(() => setShake(false), 400);
       }
-    });
-    return () => unsubscribe();
+    };
+
+    const handleCrashed = (value: Partial<LiveState>) => {
+      setPhase("crashed");
+      setMultiplier(value.crashPoint ?? 1);
+      setCrashPoint(value.crashPoint ?? null);
+      setRoundId(value.roundId ?? null);
+      setShake(true);
+      setTimeout(() => setShake(false), 400);
+    };
+
+    socket.on("aviator:state", handleState);
+    socket.on("aviator:waiting", handleState);
+    socket.on("aviator:started", handleState);
+    socket.on("aviator:multiplier", handleState);
+    socket.on("aviator:countdown", handleState);
+    socket.on("aviator:crashed", handleCrashed);
+
+    return () => {
+      socket.off("aviator:state", handleState);
+      socket.off("aviator:waiting", handleState);
+      socket.off("aviator:started", handleState);
+      socket.off("aviator:multiplier", handleState);
+      socket.off("aviator:countdown", handleState);
+      socket.off("aviator:crashed", handleCrashed);
+    };
   }, []);
 
   useEffect(() => {
-    const historyRef = dbQuery(ref(rtdb, "aviator/history"), orderByChild("endedAt"), limitToLast(50));
-    const unsubscribe = onValue(historyRef, (snapshot) => {
-      const value = snapshot.val() as Record<string, HistoryItem> | null;
-      if (!value) {
+    const loadHistory = async () => {
+      try {
+        const response = await fetch(`${API_URL}/aviator/history`);
+        if (!response.ok) throw new Error(`History request failed: ${response.status}`);
+        const rounds = (await response.json()) as HistoryItem[];
+        const items = rounds
+          .filter((item) => typeof item?.crashPoint === "number")
+          .sort((a, b) => (a.endedAt > b.endedAt ? -1 : a.endedAt < b.endedAt ? 1 : 0))
+          .map((item) => Number(item.crashPoint.toFixed(2)));
+        setHistory(items);
+      } catch (error) {
+        console.error("Failed to load Aviator history", error);
         setHistory([]);
-        return;
       }
+    };
 
-      const items = Object.values(value)
-        .filter((item) => typeof item?.crashPoint === "number")
-        .sort((a, b) => (a.endedAt > b.endedAt ? -1 : a.endedAt < b.endedAt ? 1 : 0))
-        .map((item) => Number(item.crashPoint.toFixed(2)));
+    loadHistory();
+  }, []);
 
-      setHistory(items);
-    });
-    return () => unsubscribe();
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleHistoryEvent = (value: HistoryItem) => {
+      if (typeof value.crashPoint !== "number") return;
+      setHistory((prev) => [Number(value.crashPoint.toFixed(2)), ...prev].slice(0, 50));
+    };
+
+    socket.on("aviator:history", handleHistoryEvent);
+    return () => {
+      socket.off("aviator:history", handleHistoryEvent);
+    };
   }, []);
 
   const handleBet = useCallback(async () => {
