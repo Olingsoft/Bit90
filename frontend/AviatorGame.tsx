@@ -21,9 +21,151 @@ function useFonts() {
 }
 
 function colorForMultiplier(m: number) {
-  if (m >= 10) return { bg: "bg-[#22D67A]", text: "text-[#22D67A]" };
-  if (m >= 2) return { bg: "bg-[#FFB020]", text: "text-[#FFB020]" };
-  return { bg: "bg-[#FF4757]", text: "text-[#FF4757]" };
+  if (m >= 10) return { bg: "bg-[#22D67A]", text: "text-[#22D67A]", stroke: "#22D67A" };
+  if (m >= 2) return { bg: "bg-[#FFB020]", text: "text-[#FFB020]", stroke: "#FFB020" };
+  return { bg: "bg-[#FF4757]", text: "text-[#FF4757]", stroke: "#FF4757" };
+}
+
+function AviatorStageBackground({
+  phase,
+  multiplier,
+  crashPoint,
+}: {
+  phase: Phase;
+  multiplier: number;
+  crashPoint: number | null;
+}) {
+  const isWaiting = phase === "waiting";
+  const isCrashed = phase === "crashed";
+  const accent = isCrashed ? "#FF4757" : colorForMultiplier(multiplier).stroke;
+
+  const visualCap = Math.max(
+    isWaiting ? 2.5 : crashPoint ?? multiplier * 1.15,
+    multiplier,
+    2.5
+  );
+  const progress = isWaiting ? 0 : Math.min(Math.max((multiplier - 1) / (visualCap - 1), 0), 1);
+
+  const startX = 36;
+  const startY = 248;
+  const endX = startX + progress * 318;
+  const endY = startY - Math.pow(progress, 0.82) * 198;
+  const controlX = startX + progress * 150;
+  const controlY = startY - progress * 62;
+  const curvePath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
+  const areaPath = `${curvePath} L ${endX} ${startY} L ${startX} ${startY} Z`;
+  const planeAngle = -16 - progress * 32;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 70% at 50% 115%, rgba(180, 40, 20, 0.45) 0%, rgba(40, 8, 8, 0.35) 35%, transparent 68%), radial-gradient(circle at 50% 50%, rgba(255, 120, 40, 0.08) 0%, transparent 55%), linear-gradient(180deg, #070b14 0%, #0c1220 45%, #140a0a 100%)",
+        }}
+      />
+
+      <div
+        className={`aviator-sun ${isWaiting ? "aviator-sun-waiting" : isCrashed ? "aviator-sun-crashed" : ""}`}
+      />
+
+      <svg
+        className={`aviator-rays ${isWaiting ? "aviator-rays-fast" : isCrashed ? "aviator-rays-crashed" : ""}`}
+        viewBox="0 0 400 400"
+        aria-hidden
+      >
+        {Array.from({ length: 24 }).map((_, index) => {
+          const angle = (index / 24) * 360;
+          return (
+            <line
+              key={angle}
+              x1="200"
+              y1="200"
+              x2="200"
+              y2="28"
+              stroke={isCrashed ? "rgba(255,71,87,0.18)" : "rgba(255,176,32,0.14)"}
+              strokeWidth="1.5"
+              transform={`rotate(${angle} 200 200)`}
+            />
+          );
+        })}
+      </svg>
+
+      <div className="aviator-stars" aria-hidden />
+
+      <svg
+        viewBox="0 0 400 280"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="aviatorCurveStroke" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={isCrashed ? "#FF4757" : "#FF4757"} stopOpacity="0.35" />
+            <stop offset="55%" stopColor={accent} stopOpacity="0.95" />
+            <stop offset="100%" stopColor={isCrashed ? "#FF4757" : "#FFE08A"} stopOpacity="1" />
+          </linearGradient>
+          <linearGradient id="aviatorCurveFill" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.08" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0.28" />
+          </linearGradient>
+          <filter id="aviatorGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <line x1="0" y1="248" x2="400" y2="248" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+
+        {!isWaiting && (
+          <>
+            <path d={areaPath} fill="url(#aviatorCurveFill)" />
+            <path
+              d={curvePath}
+              fill="none"
+              stroke="url(#aviatorCurveStroke)"
+              strokeWidth="4"
+              strokeLinecap="round"
+              filter="url(#aviatorGlow)"
+              className={isCrashed ? "aviator-curve-crash" : "aviator-curve-live"}
+            />
+            <g transform={`translate(${endX} ${endY}) rotate(${planeAngle})`}>
+              <g className={isCrashed ? "aviator-plane-crash" : "aviator-plane-live"}>
+                <path
+                  d="M-22 0 L-8 4 L8 0 L-8 -4 Z"
+                  fill={accent}
+                  opacity="0.95"
+                />
+                <path d="M-4 0 L16 -2 L16 2 Z" fill="#FFF3D6" opacity="0.9" />
+                <path d="M-10 -7 L-4 -2 L-4 2 L-10 7 Z" fill={accent} opacity="0.55" />
+                <circle cx="-14" cy="0" r="2.5" fill="#FFF3D6" opacity="0.85" />
+              </g>
+            </g>
+          </>
+        )}
+
+        {isWaiting && (
+          <g transform="translate(72 228)">
+            <path
+              d="M-22 0 L-8 4 L8 0 L-8 -4 Z"
+              fill="#FFB020"
+              opacity="0.85"
+              className="aviator-plane-idle"
+            />
+            <path d="M-4 0 L16 -2 L16 2 Z" fill="#FFF3D6" opacity="0.75" />
+          </g>
+        )}
+      </svg>
+
+      {isCrashed && <div className="aviator-crash-flash" aria-hidden />}
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#070b14] to-transparent" />
+    </div>
+  );
 }
 
 type Phase = "waiting" | "flying" | "crashed";
@@ -263,8 +405,68 @@ export default function AviatorGame() {
         .blink { animation: blink 1s ease-in-out infinite; }
         @keyframes rise { from { transform: translateY(6px) } to { transform: translateY(0) } }
         .rise { animation: rise 0.25s ease-out; }
+        @keyframes aviator-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes aviator-sun-pulse { 0%,100%{ opacity: 0.55; transform: translate(-50%, -50%) scale(1); } 50%{ opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); } }
+        @keyframes aviator-stars-drift { from { transform: translateY(0); } to { transform: translateY(-120px); } }
+        @keyframes aviator-plane-idle { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-4px); } }
+        @keyframes aviator-plane-live { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-2px); } }
+        @keyframes aviator-plane-crash { 0%{ transform: translate(0, 0); opacity: 1; } 100%{ transform: translate(36px, -28px); opacity: 0.2; } }
+        @keyframes aviator-crash-flash { 0%{ opacity: 0.45; } 100%{ opacity: 0; } }
+        @keyframes aviator-curve-draw { from { stroke-dashoffset: 420; } to { stroke-dashoffset: 0; } }
+        .aviator-sun {
+          position: absolute;
+          left: 50%;
+          top: 58%;
+          width: min(72vw, 420px);
+          height: min(72vw, 420px);
+          transform: translate(-50%, -50%);
+          border-radius: 9999px;
+          background: radial-gradient(circle, rgba(255, 176, 32, 0.22) 0%, rgba(255, 80, 40, 0.12) 38%, transparent 72%);
+          filter: blur(2px);
+        }
+        .aviator-sun-waiting { animation: aviator-sun-pulse 1.8s ease-in-out infinite; }
+        .aviator-sun-crashed {
+          background: radial-gradient(circle, rgba(255, 71, 87, 0.28) 0%, rgba(120, 20, 30, 0.12) 42%, transparent 72%);
+        }
+        .aviator-rays {
+          position: absolute;
+          left: 50%;
+          top: 58%;
+          width: min(95vw, 560px);
+          height: min(95vw, 560px);
+          transform: translate(-50%, -50%);
+          animation: aviator-spin 24s linear infinite;
+          opacity: 0.75;
+        }
+        .aviator-rays-fast { animation-duration: 10s; opacity: 0.9; }
+        .aviator-rays-crashed { animation-duration: 6s; opacity: 0.55; }
+        .aviator-stars {
+          position: absolute;
+          inset: 0;
+          background-image:
+            radial-gradient(circle at 12% 18%, rgba(255,255,255,0.35) 0 1px, transparent 1px),
+            radial-gradient(circle at 28% 72%, rgba(255,255,255,0.18) 0 1px, transparent 1px),
+            radial-gradient(circle at 44% 34%, rgba(255,255,255,0.22) 0 1px, transparent 1px),
+            radial-gradient(circle at 63% 16%, rgba(255,255,255,0.16) 0 1px, transparent 1px),
+            radial-gradient(circle at 78% 58%, rgba(255,255,255,0.24) 0 1px, transparent 1px),
+            radial-gradient(circle at 88% 28%, rgba(255,255,255,0.14) 0 1px, transparent 1px);
+          animation: aviator-stars-drift 18s linear infinite;
+          opacity: 0.35;
+        }
+        .aviator-plane-idle { animation: aviator-plane-idle 1.4s ease-in-out infinite; transform-origin: center; }
+        .aviator-plane-live { animation: aviator-plane-live 0.9s ease-in-out infinite; transform-origin: center; }
+        .aviator-plane-crash { animation: aviator-plane-crash 0.55s ease-out forwards; transform-origin: center; }
+        .aviator-curve-live { stroke-dasharray: 420; stroke-dashoffset: 0; transition: d 0.15s linear; }
+        .aviator-curve-crash { stroke: #FF4757; filter: drop-shadow(0 0 8px rgba(255,71,87,0.65)); }
+        .aviator-crash-flash {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 58% 62%, rgba(255,71,87,0.35), transparent 62%);
+          animation: aviator-crash-flash 0.55s ease-out forwards;
+          pointer-events: none;
+        }
         @media (prefers-reduced-motion: reduce) {
-          .blink, .rise { animation: none; }
+          .blink, .rise, .aviator-rays, .aviator-stars, .aviator-sun-waiting, .aviator-plane-idle, .aviator-plane-live, .aviator-plane-crash, .aviator-crash-flash { animation: none; }
         }
         ::-webkit-scrollbar { height: 5px; width: 5px; }
         ::-webkit-scrollbar-thumb { background: #22304A; border-radius: 4px; }
@@ -294,11 +496,9 @@ export default function AviatorGame() {
           <div className="order-1 lg:order-2 bg-[#121A2E] rounded-2xl border border-[#22304A] overflow-hidden">
             <div
               className={`relative h-[280px] xs:h-[320px] sm:h-[420px] lg:h-[520px] overflow-hidden ${shake ? "shake-anim" : ""}`}
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 100%, rgba(255,176,32,0.08), transparent 55%), linear-gradient(180deg, #0A0F1E 0%, #101a30 100%)",
-              }}
             >
+              <AviatorStageBackground phase={phase} multiplier={multiplier} crashPoint={crashPoint} />
+
               <div className="absolute inset-0 z-10 flex flex-col justify-center items-center pointer-events-none px-4">
                 {phase === "waiting" ? (
                   <div className="text-center rise w-full">

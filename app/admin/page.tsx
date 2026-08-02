@@ -73,6 +73,32 @@ function formatCurrency(n: number) {
   return `KES ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
 }
 
+function formatCrashMultiplier(value: unknown) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '—'
+  return `${n.toFixed(2)}x`
+}
+
+function parseCrashRangeInput(minStr: string, maxStr: string) {
+  const min = Number(minStr)
+  const max = Number(maxStr)
+
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    throw new Error('Crash range values must be valid numbers')
+  }
+  if (min < 1 || max < 1) {
+    throw new Error('Crash range must be at least 1.00')
+  }
+  if (min > max) {
+    throw new Error('Minimum crash point must be less than or equal to maximum crash point')
+  }
+
+  return {
+    min: Number(min.toFixed(2)),
+    max: Number(max.toFixed(2)),
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Small building blocks
 // ---------------------------------------------------------------------------
@@ -257,11 +283,23 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [activePage, setActivePage] = useState<Page>('dashboard')
   const [crashMin, setCrashMin] = useState('1.00')
-  const [crashMax, setCrashMax] = useState('1000.00')
+  const [crashMax, setCrashMax] = useState('10.00')
+  const [rangeDirty, setRangeDirty] = useState(false)
   const [rangeMessage, setRangeMessage] = useState<string | null>(null)
+  const [rangeMessageTone, setRangeMessageTone] = useState<'success' | 'error'>('success')
   const [savingRange, setSavingRange] = useState(false)
 
   const router = useRouter()
+
+  function applyCrashRangeFromServer(crashRange?: { min?: number; max?: number } | null) {
+    if (!crashRange || typeof crashRange.min !== 'number' || typeof crashRange.max !== 'number') {
+      return
+    }
+
+    setCrashMin(crashRange.min.toFixed(2))
+    setCrashMax(crashRange.max.toFixed(2))
+    setRangeDirty(false)
+  }
 
   async function fetchAdmin() {
     const res = await fetch(`${API_URL}/admin`, {
@@ -286,27 +324,13 @@ export default function AdminPage() {
     setSavingRange(true)
     setRangeMessage(null)
     try {
-      const minValue = Number(crashMin)
-      const maxValue = Number(crashMax)
-
-      if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
-        throw new Error('Crash range values must be valid numbers')
-      }
-      if (minValue < 1 || maxValue < 1) {
-        throw new Error('Crash range must be at least 1.00')
-      }
-      if (minValue > maxValue) {
-        throw new Error('Minimum crash point must be less than or equal to maximum crash point')
-      }
-      if (maxValue > 1000) {
-        throw new Error('Maximum crash point must not exceed 1000.00')
-      }
+      const { min, max } = parseCrashRangeInput(crashMin, crashMax)
 
       const res = await fetch(`${API_URL}/admin/crash-range`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ min: minValue, max: maxValue }),
+        body: JSON.stringify({ min, max }),
       })
 
       if (!res.ok) {
@@ -315,19 +339,43 @@ export default function AdminPage() {
       }
 
       const json = await res.json()
-      setCrashMin(Number(json.crashRange.min).toFixed(2))
-      setCrashMax(Number(json.crashRange.max).toFixed(2))
-      setRangeMessage(`Saved: ${json.crashRange.min.toFixed(2)}x - ${json.crashRange.max.toFixed(2)}x`)
-      handleManualRefresh()
+      applyCrashRangeFromServer(json.crashRange)
+      setRangeMessageTone('success')
+      setRangeMessage(
+        `Saved: ${formatCrashMultiplier(json.crashRange.min)} - ${formatCrashMultiplier(json.crashRange.max)}`
+      )
+      await handleManualRefresh()
     } catch (err: any) {
+      setRangeMessageTone('error')
       setRangeMessage(err.message || 'Could not save range')
     } finally {
       setSavingRange(false)
     }
   }
 
+  function resetCrashRangeForm() {
+    applyCrashRangeFromServer(data?.crashRange)
+    setRangeMessage(null)
+  }
+
+  const savedCrashRange = data?.crashRange
+  const parsedCrashRange = (() => {
+    try {
+      return parseCrashRangeInput(crashMin, crashMax)
+    } catch {
+      return null
+    }
+  })()
+  const crashRangeUnchanged =
+    parsedCrashRange &&
+    savedCrashRange &&
+    parsedCrashRange.min === savedCrashRange.min &&
+    parsedCrashRange.max === savedCrashRange.max
+  const canSaveCrashRange = Boolean(parsedCrashRange && !crashRangeUnchanged && !savingRange)
+
   useEffect(() => {
     let cancelled = false
+    let initialRangeSynced = false
 
     async function load() {
       try {
@@ -336,9 +384,9 @@ export default function AdminPage() {
           setData(json)
           setError(null)
           setLastUpdated(new Date())
-          if (json.crashRange) {
-            setCrashMin(Number(json.crashRange.min).toFixed(2))
-            setCrashMax(Number(json.crashRange.max).toFixed(2))
+          if (!initialRangeSynced && json.crashRange) {
+            applyCrashRangeFromServer(json.crashRange)
+            initialRangeSynced = true
           }
         }
       } catch (err: any) {
@@ -366,6 +414,9 @@ export default function AdminPage() {
         setData(json)
         setLastUpdated(new Date())
         setError(null)
+        if (!rangeDirty && json.crashRange) {
+          applyCrashRangeFromServer(json.crashRange)
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Refresh error')
@@ -593,7 +644,7 @@ export default function AdminPage() {
                     <p className="text-sm text-slate-500">Control the next generated crash values.</p>
                   </div>
                   <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">
-                    Current: {data?.crashRange?.min?.toFixed(2)}x - {data?.crashRange?.max?.toFixed(2)}x
+                    Saved: {formatCrashMultiplier(savedCrashRange?.min)} - {formatCrashMultiplier(savedCrashRange?.max)}
                   </span>
                 </div>
 
@@ -604,9 +655,12 @@ export default function AdminPage() {
                       type="number"
                       step="0.01"
                       min="1"
-                      max="1000"
                       value={crashMin}
-                      onChange={(event) => setCrashMin(event.target.value)}
+                      onChange={(event) => {
+                        setCrashMin(event.target.value)
+                        setRangeDirty(true)
+                        setRangeMessage(null)
+                      }}
                       className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-3 py-2 text-slate-100 outline-none ring-1 ring-transparent transition focus:ring-sky-500"
                     />
                   </label>
@@ -616,24 +670,49 @@ export default function AdminPage() {
                       type="number"
                       step="0.01"
                       min="1"
-                      max="1000"
                       value={crashMax}
-                      onChange={(event) => setCrashMax(event.target.value)}
+                      onChange={(event) => {
+                        setCrashMax(event.target.value)
+                        setRangeDirty(true)
+                        setRangeMessage(null)
+                      }}
                       className="w-full rounded-lg border border-white/[0.08] bg-slate-950/70 px-3 py-2 text-slate-100 outline-none ring-1 ring-transparent transition focus:ring-sky-500"
                     />
                   </label>
                 </div>
 
+                <p className="mt-3 text-xs text-slate-500">
+                  Each queued round gets a random crash point between your saved minimum and maximum. Saving regenerates the crash queue.
+                </p>
+
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <button
-                    onClick={saveCrashRange}
-                    disabled={savingRange}
-                    className="inline-flex items-center justify-center rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-400 disabled:opacity-50"
-                  >
-                    Save Range
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={saveCrashRange}
+                      disabled={!canSaveCrashRange}
+                      className="inline-flex items-center justify-center rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {savingRange ? 'Saving...' : 'Save Range'}
+                    </button>
+                    {rangeDirty && (
+                      <button
+                        type="button"
+                        onClick={resetCrashRangeForm}
+                        disabled={savingRange}
+                        className="inline-flex items-center justify-center rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/[0.05] disabled:opacity-50"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
                   {rangeMessage && (
-                    <p className="text-sm text-slate-300">{rangeMessage}</p>
+                    <p
+                      className={`text-sm ${
+                        rangeMessageTone === 'error' ? 'text-rose-300' : 'text-emerald-300'
+                      }`}
+                    >
+                      {rangeMessage}
+                    </p>
                   )}
                 </div>
               </section>
