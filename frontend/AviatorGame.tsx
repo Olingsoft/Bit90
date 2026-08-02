@@ -797,7 +797,11 @@ function AviatorBetControlPanel({
             className="mt-3.5 sm:mt-4 w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg text-[#0A0F1E] shadow-lg shadow-[#22D67A]/20 flex items-center justify-center gap-2"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
-            {isBusy ? <span>Cashing Out...</span> : <span>Cash Out @ {multiplier.toFixed(2)}x</span>}
+            {isBusy ? (
+              <span>Cashing Out...</span>
+            ) : (
+              <span>Cash Out KSh {(betAmount * multiplier).toFixed(2)}</span>
+            )}
           </button>
         ) : cashedOutAt ? (
           <button
