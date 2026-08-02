@@ -79,9 +79,11 @@ export default function Header({ query, setQuery }: HeaderProps) {
               </span>
             </div>
           )}
-          <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] hidden sm:block">
-            Deposit
-          </button>
+          <Link href="/deposit">
+            <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] hidden sm:block">
+              Deposit
+            </button>
+          </Link>
           <button className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] flex items-center justify-center text-sm">
             👤
           </button>
