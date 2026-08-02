@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 
+import Logo from '@/public/bit90logo.png'
+import Image from 'next/image'
+
 interface HeaderProps {
   query: string
   setQuery: (value: string) => void
@@ -29,34 +32,22 @@ export default function Header({ query, setQuery }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-20 bg-[#0B0E14]/95 backdrop-blur border-b border-[#242832]">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center gap-4">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center gap-4 justify-between">
         <div className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-md border border-[#F5A623]/40 flex items-center justify-center text-[#F5A623] text-sm">
-            ♦
+          <div className="w-38 h-7 flex items-center justify-center text-[#F5A623] ">
+            ♦ <Image src={Logo} alt="Logo" width={100} height={100} />
           </div>
           <span className="font-bold tracking-tight text-base hidden xs:block" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            LUXBET
-          </span>
-        </div>
+          ♦ <Image src={Logo} alt="Logo" width={100} height={100} />
+          </span> 
+        </div> 
 
         <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#8890A3] shrink-0">
-          <a className="text-[#ECEEF3] border-b-2 border-[#F5A623] pb-[18px] -mb-[18px]">Casino</a>
+          <a className="text-[#ECEEF3] border-b-2 border-[#F5A623] pb-[18px] -mb-[18px]"></a>
           <a className="hover:text-[#ECEEF3] transition-colors">Sports</a>
           <a className="hover:text-[#ECEEF3] transition-colors">Live</a>
-          <a className="hover:text-[#ECEEF3] transition-colors">Promotions</a>
+          <a className="hover:text-[#ECEEF3] transition-colors"></a>
         </nav>
-
-        <div className="flex-1 max-w-sm hidden sm:block ml-auto">
-          <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7688] text-xs">⌕</span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search games..."
-              className="w-full bg-[#12151C] border border-[#242832] rounded-md pl-7 pr-3 py-1.5 text-[13px] outline-none focus:border-[#F5A623]/50 placeholder:text-[#6E7688]"
-            />
-          </div>
-        </div>
 
         <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
           {user ? (
