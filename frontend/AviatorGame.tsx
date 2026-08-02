@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Header from "@/components/Header";
-import { getToken } from "@/lib/auth";
+import { getToken, type User } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
 import { getSocket } from "./socketClient";
 import { useAuth } from "@/components/AuthProvider";
