@@ -26,6 +26,117 @@ function colorForMultiplier(m: number) {
   return { bg: "bg-[#FF4757]", text: "text-[#FF4757]", stroke: "#FF4757" };
 }
 
+function AviatorPlaneIcon({
+  color = "#E52E2E",
+  isCrashed = false,
+  isWaiting = false,
+}: {
+  color?: string;
+  isCrashed?: boolean;
+  isWaiting?: boolean;
+}) {
+  const bodyColor = isCrashed ? "#FF4757" : color;
+
+  return (
+    <g
+      transform="scale(0.75)"
+      className={isCrashed ? "aviator-plane-crash" : isWaiting ? "aviator-plane-idle" : "aviator-plane-live"}
+    >
+      {/* Thruster exhaust flame (live flight) */}
+      {!isWaiting && !isCrashed && (
+        <g className="aviator-thruster-flame">
+          <path
+            d="M-22 0 Q-32 -3 -40 0 Q-32 3 -22 0 Z"
+            fill="url(#aviatorThrusterGlow)"
+          />
+          <path
+            d="M-22 0 Q-28 -1.5 -34 0 Q-28 1.5 -22 0 Z"
+            fill="#FFF3D6"
+          />
+        </g>
+      )}
+
+      {/* Main Fuselage Body */}
+      <path
+        d="M-22 2 C-18 6, -6 7, 10 5 C18 4, 24 2, 27 0 C24 -2, 18 -4, 10 -5 C-6 -7, -18 -6, -22 -2 Z"
+        fill={bodyColor}
+      />
+      {/* Body Top Highlight */}
+      <path
+        d="M-18 -1 C-10 -4, 6 -3, 20 -1 C12 -2.5, -4 -3, -18 -1 Z"
+        fill="#FFFFFF"
+        opacity="0.35"
+      />
+      {/* Body Bottom Shadow */}
+      <path
+        d="M-20 2 C-10 5.5, 6 4.5, 22 1 C8 3.5, -8 4, -20 2 Z"
+        fill="#000000"
+        opacity="0.25"
+      />
+
+      {/* Cockpit Canopy */}
+      <path
+        d="M-2 -3 C3 -7, 10 -6, 13 -2.5 C8 -1, 3 -1, -2 -1 Z"
+        fill="url(#aviatorCanopyGlow)"
+        stroke="rgba(255,255,255,0.7)"
+        strokeWidth="0.5"
+      />
+      {/* Canopy Glint */}
+      <path
+        d="M2 -4 C5 -6, 9 -5, 11 -3 C8 -3.5, 5 -4, 2 -4 Z"
+        fill="#FFFFFF"
+        opacity="0.8"
+      />
+
+      {/* Main Wing (Far / Bottom) */}
+      <path
+        d="M-3 2 L4 16 L12 15 L9 2 Z"
+        fill={bodyColor}
+        filter="brightness(0.75)"
+      />
+
+      {/* Main Wing (Near / Top) */}
+      <path
+        d="M-3 -2 L6 -18 L15 -16 L9 -2 Z"
+        fill={bodyColor}
+      />
+      {/* Wing Highlight Stripe */}
+      <path
+        d="M1 -4 L6 -16 L11 -15 L8 -4 Z"
+        fill="#FFD700"
+        opacity="0.9"
+      />
+
+      {/* Tail Fin (Rudder) */}
+      <path
+        d="M-16 -2 L-25 -14 L-18 -13 L-12 -2 Z"
+        fill={bodyColor}
+      />
+      {/* Tail Gold Stripe */}
+      <path
+        d="M-15 -3 L-21 -11 L-18 -11 L-13 -3 Z"
+        fill="#FFD700"
+        opacity="0.9"
+      />
+
+      {/* Nose Cone / Propeller Hub */}
+      <path
+        d="M26 2 C28.5 1.2, 30 0.5, 30 0 C30 -0.5, 28.5 -1.2, 26 -2 Z"
+        fill="#FFD700"
+      />
+
+      {/* Spinning Propeller Blades */}
+      {!isCrashed && (
+        <g transform="translate(29, 0)" className="aviator-propeller">
+          <ellipse cx="0" cy="0" rx="1.5" ry="13" fill="rgba(255, 255, 255, 0.85)" />
+          <ellipse cx="0" cy="0" rx="13" ry="1.5" fill="rgba(255, 255, 255, 0.35)" />
+          <circle cx="0" cy="0" r="2" fill="#FFD700" />
+        </g>
+      )}
+    </g>
+  );
+}
+
 function AviatorStageBackground({
   phase,
   multiplier,
@@ -39,12 +150,12 @@ function AviatorStageBackground({
   const isCrashed = phase === "crashed";
   const accent = isCrashed ? "#FF4757" : colorForMultiplier(multiplier).stroke;
 
-  const visualCap = Math.max(
-    isWaiting ? 2.5 : crashPoint ?? multiplier * 1.15,
-    multiplier,
-    2.5
-  );
-  const progress = isWaiting ? 0 : Math.min(Math.max((multiplier - 1) / (visualCap - 1), 0), 1);
+  // Fixed multiplier threshold for plane to reach top right of stage (e.g. 2.0x multiplier).
+  // Flight trajectory is fixed so users cannot predict or notice crash points from curve speed.
+  const CLIMB_TARGET_MULTIPLIER = 2.0;
+  const progress = isWaiting
+    ? 0
+    : Math.min(Math.max((multiplier - 1) / (CLIMB_TARGET_MULTIPLIER - 1), 0), 1);
 
   const startX = 36;
   const startY = 248;
@@ -110,6 +221,14 @@ function AviatorStageBackground({
             <stop offset="0%" stopColor={accent} stopOpacity="0.08" />
             <stop offset="100%" stopColor={accent} stopOpacity="0.28" />
           </linearGradient>
+          <linearGradient id="aviatorCanopyGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#80E5FF" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#005580" stopOpacity="0.8" />
+          </linearGradient>
+          <linearGradient id="aviatorThrusterGlow" x1="0%" y1="50%" x2="100%" y2="50%">
+            <stop offset="0%" stopColor="#FFB020" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#FF4757" stopOpacity="0" />
+          </linearGradient>
           <filter id="aviatorGlow" x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
@@ -134,29 +253,14 @@ function AviatorStageBackground({
               className={isCrashed ? "aviator-curve-crash" : "aviator-curve-live"}
             />
             <g transform={`translate(${endX} ${endY}) rotate(${planeAngle})`}>
-              <g className={isCrashed ? "aviator-plane-crash" : "aviator-plane-live"}>
-                <path
-                  d="M-22 0 L-8 4 L8 0 L-8 -4 Z"
-                  fill={accent}
-                  opacity="0.95"
-                />
-                <path d="M-4 0 L16 -2 L16 2 Z" fill="#FFF3D6" opacity="0.9" />
-                <path d="M-10 -7 L-4 -2 L-4 2 L-10 7 Z" fill={accent} opacity="0.55" />
-                <circle cx="-14" cy="0" r="2.5" fill="#FFF3D6" opacity="0.85" />
-              </g>
+              <AviatorPlaneIcon color={accent} isCrashed={isCrashed} isWaiting={false} />
             </g>
           </>
         )}
 
         {isWaiting && (
           <g transform="translate(72 228)">
-            <path
-              d="M-22 0 L-8 4 L8 0 L-8 -4 Z"
-              fill="#FFB020"
-              opacity="0.85"
-              className="aviator-plane-idle"
-            />
-            <path d="M-4 0 L16 -2 L16 2 Z" fill="#FFF3D6" opacity="0.75" />
+            <AviatorPlaneIcon color="#FFB020" isCrashed={false} isWaiting={true} />
           </g>
         )}
       </svg>
@@ -412,6 +516,10 @@ export default function AviatorGame() {
         @keyframes aviator-plane-live { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-2px); } }
         @keyframes aviator-plane-crash { 0%{ transform: translate(0, 0); opacity: 1; } 100%{ transform: translate(36px, -28px); opacity: 0.2; } }
         @keyframes aviator-crash-flash { 0%{ opacity: 0.45; } 100%{ opacity: 0; } }
+        @keyframes aviator-propeller-spin { 0%{ transform: scaleY(1); opacity: 0.9; } 50%{ transform: scaleY(-0.35); opacity: 0.4; } 100%{ transform: scaleY(1); opacity: 0.9; } }
+        .aviator-propeller { animation: aviator-propeller-spin 0.08s linear infinite; transform-origin: center; }
+        @keyframes aviator-thruster-flicker { 0%,100%{ transform: scaleX(1); opacity: 0.95; } 50%{ transform: scaleX(1.3); opacity: 0.65; } }
+        .aviator-thruster-flame { animation: aviator-thruster-flicker 0.1s ease-in-out infinite; transform-origin: -22px 0px; }
         @keyframes aviator-curve-draw { from { stroke-dashoffset: 420; } to { stroke-dashoffset: 0; } }
         .aviator-sun {
           position: absolute;
