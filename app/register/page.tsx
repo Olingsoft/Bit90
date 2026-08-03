@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
-import { API_URL } from '@/lib/api'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -34,7 +33,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const res = await fetch(`${API_URL}/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password }),
