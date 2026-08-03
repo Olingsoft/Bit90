@@ -79,23 +79,22 @@ export default function Header({ query, setQuery }: HeaderProps) {
               >
                 Logout
               </button>
+              {/* BALANCE DISPLAY WHEN LOGGED IN */}
+              <div className="bg-[#12151C] border border-[#22304A] hover:border-[#22D67A]/40 transition-colors rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0 flex items-center gap-1">
+                <span className="text-[#7C8AA8] font-medium hidden sm:inline">Balance</span>
+                <span className="font-bold tabular-nums text-[#22D67A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  KSh {formatBalance(user.balance)}
+                </span>
+              </div>
             </>
           ) : (
+            /* LOGIN BUTTON WHERE BALANCE IS DISPLAYED WHEN NOT LOGGED IN */
             <Link
               href="/login"
-              className="hidden md:inline-flex bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3 py-1.5 rounded-md text-[13px]"
+              className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] shrink-0"
             >
               Login
             </Link>
-          )}
-
-          {user && (
-            <div className="bg-[#12151C] border border-[#22304A] hover:border-[#22D67A]/40 transition-colors rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0 flex items-center gap-1">
-              <span className="text-[#7C8AA8] font-medium hidden sm:inline">Balance</span>
-              <span className="font-bold tabular-nums text-[#22D67A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                KSh {formatBalance(user.balance)}
-              </span>
-            </div>
           )}
 
           <Link href="/deposit" className="hidden sm:block">
@@ -159,12 +158,12 @@ export default function Header({ query, setQuery }: HeaderProps) {
             </div>
           )}
           <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between gap-3">
-            <Link href="/deposit" onClick={() => setIsMobileMenuOpen(false)}>
-              <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-4 py-1.5 rounded-md text-[13px]">
+            <Link href="/deposit" onClick={() => setIsMobileMenuOpen(false)} className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-4 py-1.5 rounded-md text-[13px]">
                 Deposit
               </button>
             </Link>
-            {user ? (
+            {user && (
               <button
                 type="button"
                 onClick={() => {
@@ -175,12 +174,6 @@ export default function Header({ query, setQuery }: HeaderProps) {
               >
                 Logout
               </button>
-            ) : (
-              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-4 py-1.5 rounded-md text-[13px]">
-                  Login
-                </button>
-              </Link>
             )}
           </div>
         </div>
