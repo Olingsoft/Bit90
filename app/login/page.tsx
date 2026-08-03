@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('from') || '/'
   const { login, user, isLoading: authLoading } = useAuth()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
@@ -39,7 +41,7 @@ export default function LoginPage() {
       }
 
       login(data.token, data.user)
-      router.push('/')
+      router.push(redirectTo)
     } catch {
       setError('Unable to connect to server')
     } finally {
@@ -101,12 +103,24 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-amber-500 hover:text-amber-400 font-medium">
             Sign Up
           </Link>
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full bg-[#0A0F1E] flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

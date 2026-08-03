@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { getToken } from "@/lib/auth";
@@ -9,7 +10,8 @@ import { API_URL } from "@/lib/api";
 const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 
 export default function DepositPage() {
-  const { user, token, login } = useAuth();
+  const { user, token, login, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState<number | "">(500);
@@ -19,14 +21,32 @@ export default function DepositPage() {
     message: "",
   });
 
+  // Page-level auth guard — runs as soon as the session has finished loading.
+  // Unauthenticated visitors are immediately sent to login.
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login?from=/deposit");
+    }
+  }, [authLoading, user, router]);
+
+  // Pre-fill the phone field from the logged-in user's profile.
   useEffect(() => {
     if (user?.phone) {
-      // Strip +254 or 254 if present to populate input field cleanly
       const rawDigits = user.phone.replace(/\D/g, "");
       const cleanLocal = rawDigits.startsWith("254") ? rawDigits.slice(3) : rawDigits;
       setPhone(cleanLocal);
     }
   }, [user]);
+
+  // While auth is hydrating, show a full-screen spinner so the page
+  // content never flashes to an unauthenticated visitor.
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen w-full bg-[#0A0F1E] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[#22D67A] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   const handleQuickAmount = (val: number) => {
     setAmount(val);
@@ -198,7 +218,7 @@ export default function DepositPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || !phone || !amount}
+              disabled={authLoading || isLoading || !phone || !amount}
               className="w-full bg-[#22D67A] hover:bg-[#1CBE6B] disabled:bg-[#1a382b] disabled:text-[#4A7A64] text-[#0A0F1E] font-bold text-base py-4 rounded-xl transition duration-150 flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg shadow-[#22D67A]/10"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
