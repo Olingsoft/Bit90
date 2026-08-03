@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
@@ -9,6 +9,112 @@ import { API_URL } from "@/lib/api";
 
 const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+interface ToastProps {
+  message: string;
+  balance: number;
+  onDone: () => void;
+}
+
+function SuccessToast({ message, balance, onDone }: ToastProps) {
+  const [visible, setVisible] = useState(false);
+  const [progress, setProgress] = useState(100);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
+  const DURATION = 2500;
+
+  useEffect(() => {
+    // Trigger enter animation next tick
+    const t = setTimeout(() => setVisible(true), 10);
+
+    // Countdown progress bar
+    const tick = (now: number) => {
+      if (startRef.current === null) startRef.current = now;
+      const elapsed = now - startRef.current;
+      const pct = Math.max(0, 100 - (elapsed / DURATION) * 100);
+      setProgress(pct);
+      if (elapsed < DURATION) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+
+    // After DURATION, trigger exit then call onDone
+    timerRef.current = setTimeout(() => {
+      setVisible(false);
+      setTimeout(onDone, 350);
+    }, DURATION);
+
+    return () => {
+      clearTimeout(t);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [onDone]);
+
+  return (
+    <div
+      className="fixed top-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)]"
+      style={{
+        transform: visible ? "translateY(0)" : "translateY(-110%)",
+        opacity: visible ? 1 : 0,
+        transition: "transform 0.35s cubic-bezier(.22,1,.36,1), opacity 0.35s ease",
+      }}
+    >
+      <div className="relative overflow-hidden bg-[#121A2E] border border-[#22D67A]/40 rounded-2xl shadow-2xl shadow-[#22D67A]/10">
+        {/* Top accent line */}
+        <div className="h-0.5 w-full bg-gradient-to-r from-[#22D67A] to-[#1CBE6B]" />
+
+        <div className="p-4 flex items-start gap-3">
+          {/* Check icon */}
+          <div className="w-9 h-9 rounded-xl bg-[#22D67A]/15 border border-[#22D67A]/30 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-[#22D67A]" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M4 10.5l4.5 4.5 7.5-8"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white leading-snug">Deposit Successful 🎉</p>
+            <p className="text-xs text-[#7C8AA8] mt-0.5 leading-relaxed">{message}</p>
+            <p className="text-xs font-semibold text-[#22D67A] mt-1">
+              New Balance: KSh {balance.toLocaleString()}
+            </p>
+          </div>
+
+          {/* Plane icon */}
+          <span className="text-lg leading-none">✈️</span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-0.5 bg-[#0D1424]">
+          <div
+            className="h-full bg-[#22D67A]/60 transition-none"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* Redirect label */}
+        <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-[#7C8AA8]">
+          <svg className="w-3 h-3 animate-spin text-[#22D67A]" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Redirecting to Aviator...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DepositPage() {
   const { user, token, login, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -20,6 +126,7 @@ export default function DepositPage() {
     type: "",
     message: "",
   });
+  const [toast, setToast] = useState<{ message: string; balance: number } | null>(null);
 
   // Page-level auth guard — runs as soon as the session has finished loading.
   // Unauthenticated visitors are immediately sent to login.
@@ -74,8 +181,7 @@ export default function DepositPage() {
         ? `+${phone}`
         : `+254${phone.replace(/^0/, "")}`;
 
-      const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
-      const res = await fetch(`${baseUrl}/users/deposit`, {
+      const res = await fetch(`${API_URL}users/deposit`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -100,11 +206,10 @@ export default function DepositPage() {
         });
       }
 
-      setStatus({
-        type: "success",
-        message: `Deposit of KSh ${Number(amount).toLocaleString()} successful! New Balance: KSh ${Number(
-          updatedBalance ?? amount
-        ).toLocaleString()}`,
+      // Show toast — redirect happens when toast calls onDone
+      setToast({
+        message: `KSh ${Number(amount).toLocaleString()} deposited to your account.`,
+        balance: updatedBalance ?? Number(amount),
       });
     } catch (err) {
       setStatus({
@@ -121,6 +226,15 @@ export default function DepositPage() {
       className="min-h-screen w-full bg-[#0A0F1E] text-[#E7ECF6]"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
+      {/* Success toast — mounts when deposit succeeds */}
+      {toast && (
+        <SuccessToast
+          message={toast.message}
+          balance={toast.balance}
+          onDone={() => router.push("/aviator")}
+        />
+      )}
+
       <Header query={query} setQuery={setQuery} />
 
       <main className="max-w-xl mx-auto p-3 sm:p-6 rise">
@@ -236,15 +350,9 @@ export default function DepositPage() {
             </button>
           </form>
 
-          {/* Status Message */}
-          {status.message && (
-            <div
-              className={`mt-4 p-3.5 rounded-xl text-center text-sm font-semibold border rise ${
-                status.type === "success"
-                  ? "bg-[#22D67A]/10 border-[#22D67A]/30 text-[#22D67A]"
-                  : "bg-[#FF4757]/10 border-[#FF4757]/30 text-[#FF4757]"
-              }`}
-            >
+          {/* Error Message */}
+          {status.type === "error" && status.message && (
+            <div className="mt-4 p-3.5 rounded-xl text-center text-sm font-semibold border rise bg-[#FF4757]/10 border-[#FF4757]/30 text-[#FF4757]">
               {status.message}
             </div>
           )}
@@ -252,7 +360,7 @@ export default function DepositPage() {
 
         {/* Security / Help Note */}
         <p className="text-center text-xs text-[#7C8AA8] mt-6">
-          Encrypted & direct integration with Safaricom M-PESA API.
+          Encrypted &amp; direct integration with Safaricom M-PESA API.
         </p>
       </main>
     </div>

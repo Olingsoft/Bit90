@@ -97,7 +97,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
             </Link>
           )}
 
-          <Link href="/deposit" className="hidden sm:block">
+          <Link href="/deposit">
             <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
               Deposit
             </button>
@@ -157,12 +157,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
               </span>
             </div>
           )}
-          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between gap-3">
-            <Link href="/deposit" onClick={() => setIsMobileMenuOpen(false)} className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-4 py-1.5 rounded-md text-[13px]">
-                Deposit
-              </button>
-            </Link>
+          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-end gap-3">
             {user && (
               <button
                 type="button"
