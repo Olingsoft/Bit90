@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Header from "@/components/Header";
 import { getToken, type User } from "@/lib/auth";
-import { API_URL } from "@/lib/api";
 import { getSocket } from "./socketClient";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -429,7 +428,7 @@ export default function AviatorGame() {
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const response = await fetch(`${API_URL}/aviator/history`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}aviator/history`);
         if (!response.ok) throw new Error(`History request failed: ${response.status}`);
         const rounds = (await response.json()) as HistoryItem[];
         const items = rounds
@@ -647,7 +646,7 @@ function AviatorBetControlPanel({
     setIsBusy(true);
     setFeedback("");
     try {
-      const response = await fetch(`${API_URL}/aviator/bet`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}aviator/bet`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -689,7 +688,7 @@ function AviatorBetControlPanel({
     setIsBusy(true);
     try {
       const targetRoundId = roundId || placedRoundId;
-      const response = await fetch(`${API_URL}/aviator/cashout`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}aviator/cashout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -783,11 +782,10 @@ function AviatorBetControlPanel({
         <button
           onClick={handleBet}
           disabled={isBetPlaced || isBusy}
-          className={`mt-3.5 sm:mt-4 w-full transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg flex items-center justify-center gap-2 ${
-            isBetPlaced
+          className={`mt-3.5 sm:mt-4 w-full transition rounded-xl py-3.5 sm:py-4 font-bold text-base sm:text-lg flex items-center justify-center gap-2 ${isBetPlaced
               ? "bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] cursor-not-allowed"
               : "bg-[#FFB020] hover:bg-[#F0A415] text-[#0A0F1E] disabled:opacity-50"
-          }`}
+            }`}
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
           {isBusy ? (
