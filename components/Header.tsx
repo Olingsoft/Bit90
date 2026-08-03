@@ -53,22 +53,20 @@ export default function Header({ query, setQuery }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-20 bg-[#0B0E14]/95 backdrop-blur border-b border-[#242832]">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center gap-4 justify-between">
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="w-38 h-7 flex items-center justify-center text-[#F5A623] ">
-            ♦ <Image src={Logo} alt="Logo" width={100} height={100} />
-          </div>
-          <span className="font-bold tracking-tight text-base hidden xs:block" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-          ♦ <Image src={Logo} alt="Logo" width={100} height={100} />
-          </span> 
-        </div> 
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2 sm:gap-4">
+        {/* LOGO */}
+        <Link href="/" className="flex items-center gap-1.5 shrink-0">
+          <Image src={Logo} alt="Bit90 Logo" width={110} height={32} className="h-7 w-auto object-contain" priority />
+        </Link> 
 
+        {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#8890A3] shrink-0">
           <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Sports</a>
           <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Live</a>
         </nav>
 
-        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+        {/* RIGHT ACTION BUTTONS */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           {user ? (
             <>
               <span className="text-[#8890A3] text-[13px] hidden md:inline">
@@ -77,7 +75,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors text-[#ECEEF3] font-medium px-3 py-1.5 rounded-md text-[13px]"
+                className="hidden md:inline-flex bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors text-[#ECEEF3] font-medium px-3 py-1.5 rounded-md text-[13px]"
               >
                 Logout
               </button>
@@ -85,21 +83,23 @@ export default function Header({ query, setQuery }: HeaderProps) {
           ) : (
             <Link
               href="/login"
-              className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3 py-1.5 rounded-md text-[13px]"
+              className="hidden md:inline-flex bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3 py-1.5 rounded-md text-[13px]"
             >
               Login
             </Link>
           )}
+
           {user && (
-            <div className="bg-[#12151C] border border-[#242832] rounded-md px-2.5 sm:px-3 py-1.5 text-[13px]">
-              <span className="text-[#6E7688] mr-1.5 hidden lg:inline">Balance</span>
-              <span className="font-semibold tabular-nums" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <div className="bg-[#12151C] border border-[#242832] rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0">
+              <span className="text-[#6E7688] mr-1 hidden lg:inline">Balance</span>
+              <span className="font-semibold tabular-nums text-[#22D67A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Ksh.{formatBalance(user.balance)}
               </span>
             </div>
           )}
-          <Link href="/deposit">
-            <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] hidden sm:block">
+
+          <Link href="/deposit" className="hidden sm:block">
+            <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px]">
               Deposit
             </button>
           </Link>
@@ -110,7 +110,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors text-[#ECEEF3] flex items-center justify-center cursor-pointer"
+            className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors text-[#ECEEF3] flex items-center justify-center shrink-0 cursor-pointer"
           >
             {isFullscreen ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,12 +123,12 @@ export default function Header({ query, setQuery }: HeaderProps) {
             )}
           </button>
 
-          {/* Menu Button for Small Screens (Replaces 👤 head icon) */}
+          {/* Menu Button for Small Screens */}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle Menu"
-            className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors flex items-center justify-center text-[#ECEEF3] md:hidden cursor-pointer"
+            className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors flex items-center justify-center text-[#ECEEF3] shrink-0 md:hidden cursor-pointer"
           >
             {isMobileMenuOpen ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,20 +150,40 @@ export default function Header({ query, setQuery }: HeaderProps) {
             <a className="text-[#ECEEF3] font-semibold hover:text-[#F5A623] transition-colors cursor-pointer">Sports</a>
             <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Live</a>
           </nav>
-          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between">
+          {user && (
+            <div className="text-xs text-[#8890A3] font-mono pt-1">
+              Account: <span className="text-[#ECEEF3] font-semibold">{user.phone}</span>
+            </div>
+          )}
+          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between gap-3">
             <Link href="/deposit" onClick={() => setIsMobileMenuOpen(false)}>
-              <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px]">
+              <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-4 py-1.5 rounded-md text-[13px]">
                 Deposit
               </button>
             </Link>
-            {user && (
-              <span className="text-[#8890A3] text-xs font-mono">{user.phone}</span>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  handleLogout()
+                }}
+                className="bg-[#12151C] border border-[#FF4757]/40 hover:border-[#FF4757] transition-colors text-[#FF4757] font-medium px-4 py-1.5 rounded-md text-[13px]"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-4 py-1.5 rounded-md text-[13px]">
+                  Login
+                </button>
+              </Link>
             )}
           </div>
         </div>
       )}
 
-      {/* mobile search */}
+      {/* Mobile Search Input */}
       <div className="sm:hidden px-3 pb-2.5">
         <div className="relative">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7688] text-xs">⌕</span>
