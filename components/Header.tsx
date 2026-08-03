@@ -57,7 +57,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
           <Image src={Logo} alt="Bit90 Logo" width={110} height={32} className="h-7 w-auto object-contain" priority />
-        </Link> 
+        </Link>
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#8890A3] shrink-0">
@@ -186,7 +186,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search games..."
+            placeholder="Search..."
             className="w-full bg-[#12151C] border border-[#242832] rounded-md pl-7 pr-3 py-1.5 text-[13px] outline-none focus:border-[#F5A623]/50 placeholder:text-[#6E7688]"
           />
         </div>

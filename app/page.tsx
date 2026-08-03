@@ -119,9 +119,8 @@ function AviatorCard() {
             })()}
           </svg>
           <span
-            className={`text-3xl sm:text-4xl font-bold tabular-nums z-10 ${
-              phase === "crashed" ? "text-[#E5484D]" : "text-[#F5A623]"
-            }`}
+            className={`text-3xl sm:text-4xl font-bold tabular-nums z-10 ${phase === "crashed" ? "text-[#E5484D]" : "text-[#F5A623]"
+              }`}
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             {mult.toFixed(2)}x
@@ -181,7 +180,7 @@ function Bit90TradeCard() {
           </div>
 
           <Link
-            href="/aviator"
+            href="/trade"
             className="inline-flex items-center justify-center gap-1.5 bg-[#22D67A] hover:bg-[#1CBE6B] transition-colors text-[#0A0F1E] font-semibold px-5 py-2.5 rounded-lg text-sm shadow-md"
           >
             Start Trading →
@@ -203,9 +202,8 @@ function Bit90TradeCard() {
           </svg>
           <div className="z-10 text-center">
             <span
-              className={`text-3xl sm:text-4xl font-bold tabular-nums ${
-                trend === "up" ? "text-[#22D67A]" : "text-[#FF4757]"
-              }`}
+              className={`text-3xl sm:text-4xl font-bold tabular-nums ${trend === "up" ? "text-[#22D67A]" : "text-[#FF4757]"
+                }`}
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               {rate.toFixed(2)}
