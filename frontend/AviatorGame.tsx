@@ -210,17 +210,16 @@ function AviatorStageBackground({
     ? 0
     : Math.min(Math.max((activeMultiplier - 1) / (CLIMB_TARGET_MULTIPLIER - 1), 0), 1);
 
-  const startX = 36;
-  const startY = 248;
-  const endX = startX + progress * 318;
-  // Reduced flight altitude: climbs 140px max (endY = 108) leaving top space clear
-  const endY = startY - Math.pow(progress, 0.88) * 140;
-  const controlX = startX + progress * 165;
-  const controlY = startY - progress * 40;
+  const startX = 45;
+  const startY = 238;
+  const endX = startX + progress * 290;
+  const endY = startY - Math.pow(progress, 0.88) * 123;
+  const controlX = startX + progress * 150;
+  const controlY = startY - progress * 35;
   const curvePath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
   const areaPath = `${curvePath} L ${endX} ${startY} L ${startX} ${startY} Z`;
   // Reduced pitch angle for smoother level-flight look
-  const planeAngle = -10 - progress * 22;
+  const planeAngle = -8 - progress * 22;
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -262,7 +261,7 @@ function AviatorStageBackground({
 
       <svg
         viewBox="0 0 400 280"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="none"
         className="absolute inset-0 h-full w-full"
         aria-hidden
       >
@@ -293,7 +292,7 @@ function AviatorStageBackground({
           </filter>
         </defs>
 
-        <line x1="0" y1="248" x2="400" y2="248" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+        <line x1="0" y1="238" x2="400" y2="238" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
 
         {!isWaiting && (
           <>
@@ -314,7 +313,7 @@ function AviatorStageBackground({
         )}
 
         {isWaiting && (
-          <g transform="translate(72 228)">
+          <g transform="translate(72 218)">
             <AviatorPlaneIcon color="#FFB020" isCrashed={false} isWaiting={true} />
           </g>
         )}
@@ -489,6 +488,13 @@ export default function AviatorGame() {
         .aviator-propeller { animation: aviator-propeller-spin 0.08s linear infinite; transform-origin: center; }
         @keyframes aviator-thruster-flicker { 0%,100%{ transform: scaleX(1); opacity: 0.95; } 50%{ transform: scaleX(1.3); opacity: 0.65; } }
         .aviator-thruster-flame { animation: aviator-thruster-flicker 0.12s ease-in-out infinite; transform-origin: right center; }
+        .aviator-sun { position: absolute; bottom: -80px; left: 50%; width: 360px; height: 360px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, rgba(255,176,32,0.25) 0%, rgba(255,71,87,0.12) 45%, transparent 70%); pointer-events: none; }
+        .aviator-sun-waiting { background: radial-gradient(circle, rgba(255,176,32,0.35) 0%, rgba(255,176,32,0.15) 50%, transparent 70%); }
+        .aviator-sun-crashed { background: radial-gradient(circle, rgba(255,71,87,0.45) 0%, rgba(255,71,87,0.2) 50%, transparent 70%); }
+        .aviator-rays { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; transform: translate(-50%, -50%); pointer-events: none; animation: aviator-spin 60s linear infinite; }
+        .aviator-rays-fast { animation-duration: 20s; }
+        .aviator-rays-crashed { opacity: 0.4; }
+        .aviator-crash-flash { position: absolute; inset: 0; background: rgba(255,71,87,0.25); pointer-events: none; animation: blink 0.4s ease-out 2; }
       `}</style>
 
       <Header query={query} setQuery={setQuery} />
