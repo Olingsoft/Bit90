@@ -357,7 +357,6 @@ export default function AviatorGame() {
   const [history, setHistory] = useState<number[]>([]);
   const [countdown, setCountdown] = useState<number>(5);
   const [shake, setShake] = useState<boolean>(false);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [roundId, setRoundId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -458,20 +457,6 @@ export default function AviatorGame() {
     };
   }, []);
 
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-      setIsFullscreen(false);
-    }
-  }, []);
-
   const mColor = colorForMultiplier(multiplier);
 
   return (
@@ -552,12 +537,6 @@ export default function AviatorGame() {
                   Aviator Live
                 </span>
               </div>
-              <button
-                onClick={toggleFullscreen}
-                className="text-xs bg-[#121A2E] border border-[#22304A] hover:bg-[#1c2947] text-[#C4CCE0] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
-              >
-                {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-              </button>
             </div>
 
             {/* STAGE ANIMATION CANVAS */}
