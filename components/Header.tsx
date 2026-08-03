@@ -90,16 +90,16 @@ export default function Header({ query, setQuery }: HeaderProps) {
           )}
 
           {user && (
-            <div className="bg-[#12151C] border border-[#242832] rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0">
-              <span className="text-[#6E7688] mr-1 hidden lg:inline">Balance</span>
-              <span className="font-semibold tabular-nums text-[#22D67A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                Ksh.{formatBalance(user.balance)}
+            <div className="bg-[#12151C] border border-[#22304A] hover:border-[#22D67A]/40 transition-colors rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0 flex items-center gap-1">
+              <span className="text-[#7C8AA8] font-medium hidden sm:inline">Balance</span>
+              <span className="font-bold tabular-nums text-[#22D67A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                KSh {formatBalance(user.balance)}
               </span>
             </div>
           )}
 
           <Link href="/deposit" className="hidden sm:block">
-            <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px]">
+            <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
               Deposit
             </button>
           </Link>
@@ -151,8 +151,11 @@ export default function Header({ query, setQuery }: HeaderProps) {
             <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Live</a>
           </nav>
           {user && (
-            <div className="text-xs text-[#8890A3] font-mono pt-1">
-              Account: <span className="text-[#ECEEF3] font-semibold">{user.phone}</span>
+            <div className="flex items-center justify-between text-xs font-mono py-2 px-3 bg-[#12151C] rounded-lg border border-[#242832]">
+              <span className="text-[#8890A3]">Account: {user.phone}</span>
+              <span className="text-[#22D67A] font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                KSh {formatBalance(user.balance)}
+              </span>
             </div>
           )}
           <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between gap-3">

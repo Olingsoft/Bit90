@@ -54,7 +54,8 @@ export default function DepositPage() {
         ? `+${phone}`
         : `+254${phone.replace(/^0/, "")}`;
 
-      const res = await fetch(`${API_URL}/users/deposit`, {
+      const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+      const res = await fetch(`${baseUrl}/users/deposit`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -69,18 +70,20 @@ export default function DepositPage() {
         throw new Error(data.message || "Failed to process deposit");
       }
 
+      const updatedBalance = typeof data.balance === "number" ? data.balance : data.user?.balance;
+
       // Update user balance in AuthContext and LocalStorage
-      if (user && data.user) {
+      if (user && typeof updatedBalance === "number") {
         login(activeToken || "", {
           ...user,
-          balance: data.user.balance,
+          balance: updatedBalance,
         });
       }
 
       setStatus({
         type: "success",
         message: `Deposit of KSh ${Number(amount).toLocaleString()} successful! New Balance: KSh ${Number(
-          data.balance
+          updatedBalance ?? amount
         ).toLocaleString()}`,
       });
     } catch (err) {
