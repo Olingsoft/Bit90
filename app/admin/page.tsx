@@ -16,6 +16,8 @@ import {
   RefreshCw,
   Copy,
   Check,
+  Sliders,
+  Zap,
 } from 'lucide-react'
 import { API_URL } from '@/lib/api'
 import { useRouter } from 'next/navigation'
@@ -288,6 +290,11 @@ export default function AdminPage() {
   const [rangeMessage, setRangeMessage] = useState<string | null>(null)
   const [rangeMessageTone, setRangeMessageTone] = useState<'success' | 'error'>('success')
   const [savingRange, setSavingRange] = useState(false)
+  // crash mode
+  const [crashMode, setCrashMode] = useState<'auto' | 'manual'>('manual')
+  const [savingMode, setSavingMode] = useState(false)
+  const [modeMessage, setModeMessage] = useState<string | null>(null)
+  const [modeMessageTone, setModeMessageTone] = useState<'success' | 'error'>('success')
 
   const router = useRouter()
 
@@ -302,7 +309,7 @@ export default function AdminPage() {
   }
 
   async function fetchAdmin() {
-    const res = await fetch(`${API_URL}/admin`, {
+    const res = await fetch(`${API_URL}admin`, {
       credentials: 'include',
       cache: 'no-store',
     })
@@ -326,7 +333,7 @@ export default function AdminPage() {
     try {
       const { min, max } = parseCrashRangeInput(crashMin, crashMax)
 
-      const res = await fetch(`${API_URL}/admin/crash-range`, {
+      const res = await fetch(`${API_URL}admin/crash-range`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -376,6 +383,7 @@ export default function AdminPage() {
   useEffect(() => {
     let cancelled = false
     let initialRangeSynced = false
+    let initialModeSynced = false
 
     async function load() {
       try {
@@ -387,6 +395,10 @@ export default function AdminPage() {
           if (!initialRangeSynced && json.crashRange) {
             applyCrashRangeFromServer(json.crashRange)
             initialRangeSynced = true
+          }
+          if (!initialModeSynced && json.game_config?.crash_mode) {
+            setCrashMode(json.game_config.crash_mode)
+            initialModeSynced = true
           }
         }
       } catch (err: any) {
@@ -405,6 +417,31 @@ export default function AdminPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
+
+  async function saveCrashMode(mode: 'auto' | 'manual') {
+    setSavingMode(true)
+    setModeMessage(null)
+    try {
+      const res = await fetch(`${API_URL}admin/config`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crash_mode: mode }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.message || `Status ${res.status}`)
+      }
+      setCrashMode(mode)
+      setModeMessageTone('success')
+      setModeMessage(`Mode set to "${mode}". Takes effect on the next round.`)
+    } catch (err: any) {
+      setModeMessageTone('error')
+      setModeMessage(err.message || 'Could not save mode')
+    } finally {
+      setSavingMode(false)
+    }
+  }
 
   async function handleManualRefresh() {
     setRefreshing(true)
@@ -426,7 +463,7 @@ export default function AdminPage() {
   }
 
   async function handleLogout() {
-    await fetch(`${API_URL}/admin/logout`, { credentials: 'include' })
+    await fetch(`${API_URL}admin/logout`, { credentials: 'include' })
     router.push('/admin/login')
   }
 
@@ -625,7 +662,7 @@ export default function AdminPage() {
 
           {activePage === 'aviator' && (
             <>
-                      <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard label="Crash Queue" value={String(data?.crashQueue?.length ?? 0)} icon={Activity} />
                 <StatCard
                   label="Phase"
@@ -637,7 +674,89 @@ export default function AdminPage() {
 
               <PublicStateBoard publicState={data?.publicState} />
 
+              {/* ── Crash Mode Toggle ─────────────────────────────────────────── */}
               <section className="rounded-xl border border-white/[0.06] bg-[#12161f] p-6">
+                <div className="mb-5 flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Sliders size={18} className="text-sky-400" />
+                    <h3 className="text-lg font-semibold text-slate-100">Crash Mode</h3>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Choose how crash points are generated each round.
+                  </p>
+                </div>
+
+                {/* Toggle pills */}
+                <div className="inline-flex rounded-xl border border-white/[0.08] bg-slate-950/60 p-1">
+                  {(['auto', 'manual'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      id={`crash-mode-${mode}`}
+                      onClick={() => saveCrashMode(mode)}
+                      disabled={savingMode}
+                      className={`relative flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium capitalize transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60
+                        ${
+                          crashMode === mode
+                            ? mode === 'auto'
+                              ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
+                              : 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                    >
+                      {mode === 'auto' ? <Zap size={14} /> : <Sliders size={14} />}
+                      {mode}
+                      {crashMode === mode && (
+                        <span className="ml-1 h-1.5 w-1.5 rounded-full bg-white/60" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mode description */}
+                <div className="mt-4 rounded-lg border border-white/[0.06] bg-slate-950/40 px-4 py-3 text-sm">
+                  {crashMode === 'auto' ? (
+                    <div className="space-y-1">
+                      <p className="font-medium text-sky-300">Auto Mode — Algorithm-driven</p>
+                      <p className="text-slate-400">
+                        Each round's crash point is generated by the band-weight algorithm. Low bands
+                        are most frequent. RTP: <span className="font-mono text-slate-200">{data?.game_config?.rtp_param ?? 0.97}</span>
+                      </p>
+                      {data?.game_config?.band_weights && (
+                        <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-5">
+                          {Object.entries(data.game_config.band_weights).map(([band, w]) => (
+                            <div key={band} className="flex items-center justify-between gap-2">
+                              <span className="text-xs text-slate-500 capitalize">{band.replace('_', ' ')}</span>
+                              <span className="font-mono text-xs text-slate-300">{String(w)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="font-medium text-amber-300">Manual Mode — Crash Range</p>
+                      <p className="text-slate-400">
+                        Each round picks a random crash point between the min and max you set below.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {modeMessage && (
+                  <p className={`mt-3 text-sm ${
+                    modeMessageTone === 'error' ? 'text-rose-300' : 'text-emerald-300'
+                  }`}>
+                    {modeMessage}
+                  </p>
+                )}
+              </section>
+
+              {/* ── Crash Range (manual-mode inputs) ─────────────────────────── */}
+              <section className={`rounded-xl border bg-[#12161f] p-6 transition-opacity ${
+                crashMode === 'manual'
+                  ? 'border-amber-500/20 opacity-100'
+                  : 'border-white/[0.04] opacity-40 pointer-events-none'
+              }`}>
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-100">Crash Range</h3>
