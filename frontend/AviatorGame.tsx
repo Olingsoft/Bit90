@@ -458,7 +458,7 @@ export default function AviatorGame() {
         if (!response.ok) throw new Error(`History request failed: ${response.status}`);
         const rounds = (await response.json()) as HistoryItem[];
         const items = rounds
-          .filter((item) => typeof item?.crashPoint === "number")
+          .filter((item) => typeof item?.crashPoint === "number" && item.endedAt != null)
           .sort((a, b) => (a.endedAt > b.endedAt ? -1 : a.endedAt < b.endedAt ? 1 : 0))
           .map((item) => Number(item.crashPoint.toFixed(2)));
         setHistory(items);
