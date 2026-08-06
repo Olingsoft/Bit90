@@ -163,9 +163,10 @@ export default function AviatorLiveBets({
     fetchRoundBets();
   }, [roundId]);
 
-  // Handle Socket Bet Event
+  // Handle Socket Bet Event — only add bets from OTHER players
   useEffect(() => {
     if (!onSocketBet) return;
+    if (onSocketBet.isUser) return; // skip own bet
     setLiveBets((prev) => [onSocketBet, ...prev]);
   }, [onSocketBet]);
 
@@ -258,10 +259,11 @@ export default function AviatorLiveBets({
   const allUserBetsCombined = [...userBets, ...dbUserBets];
   const uniqueUserBets = Array.from(new Map(allUserBetsCombined.map((b) => [b.id, b])).values());
 
-  // Stats calculation
-  const totalBetsCount = liveBets.length;
-  const totalCashedOutCount = liveBets.filter((b) => b.cashedOut).length;
-  const totalPayoutSum = liveBets
+  // Stats calculation — exclude the current user's own bets from counts
+  const otherBets = liveBets.filter((b) => !b.isUser);
+  const totalBetsCount = otherBets.length;
+  const totalCashedOutCount = otherBets.filter((b) => b.cashedOut).length;
+  const totalPayoutSum = otherBets
     .filter((b) => b.cashedOut && b.payout)
     .reduce((sum, b) => sum + (b.payout || 0), 0);
 
@@ -339,14 +341,14 @@ export default function AviatorLiveBets({
 
           {/* SCROLLABLE BETS LIST */}
           <div className="flex-1 overflow-y-auto divide-y divide-[#1A253D] scrollbar-thin scrollbar-thumb-[#22304A]">
-            {liveBets.length === 0 ? (
+            {otherBets.length === 0 ? (
               <div className="p-8 text-center text-[#64748B] flex flex-col items-center gap-2">
                 <Users className="w-8 h-8 text-[#22304A]" />
                 <p className="text-xs">No bets placed in this round yet.</p>
                 <p className="text-[11px] text-[#475569]">Bets placed by players in database will appear here live!</p>
               </div>
             ) : (
-              liveBets.map((bet) => {
+              liveBets.filter((bet) => !bet.isUser).map((bet) => {
                 const isHighMult = bet.cashedOutAt && bet.cashedOutAt >= 10;
                 const isMidMult = bet.cashedOutAt && bet.cashedOutAt >= 2.0;
 
