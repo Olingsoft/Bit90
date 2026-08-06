@@ -6,7 +6,7 @@ import { getToken, type User } from "@/lib/auth";
 import { getSocket } from "./socketClient";
 import { useAuth } from "@/components/AuthProvider";
 import { API_URL } from "@/lib/api";
-import AviatorLiveBets, { type UserBetRecord } from "./AviatorLiveBets";
+import AviatorLiveBets, { type UserBetRecord, type LiveBetItem } from "./AviatorLiveBets";
 
 const FONT_LINK_ID = "aviator-fonts";
 
@@ -359,6 +359,8 @@ export default function AviatorGame() {
   const [shake, setShake] = useState<boolean>(false);
   const [roundId, setRoundId] = useState<string | null>(null);
   const [userBets, setUserBets] = useState<UserBetRecord[]>([]);
+  const [socketBet, setSocketBet] = useState<LiveBetItem | undefined>();
+  const [socketCashout, setSocketCashout] = useState<{ roundId?: string; multiplier: number; payout: number; panelIndex: number; username?: string } | undefined>();
 
   useEffect(() => {
     const socket = getSocket();
@@ -407,12 +409,30 @@ export default function AviatorGame() {
       if (value.roundId) setRoundId(value.roundId);
     };
 
+    const handleBet = (data: any) => {
+      setSocketBet({
+        id: `socket-bet-${Date.now()}-${Math.random()}`,
+        username: data.username || "0712***21",
+        avatarColor: "from-[#3B82F6] to-[#60A5FA]",
+        amount: data.amount,
+        cashedOut: false,
+        isUser: false,
+        roundId: data.roundId,
+      });
+    };
+
+    const handleCashout = (data: any) => {
+      setSocketCashout(data);
+    };
+
     socket.on("aviator:state", handleState);
     socket.on("aviator:waiting", handleWaiting);
     socket.on("aviator:countdown", handleCountdown);
     socket.on("aviator:started", handleStarted);
     socket.on("aviator:multiplier", handleMultiplier);
     socket.on("aviator:crashed", handleCrashed);
+    socket.on("aviator:bet", handleBet);
+    socket.on("aviator:cashout", handleCashout);
 
     return () => {
       socket.off("aviator:state", handleState);
@@ -421,6 +441,8 @@ export default function AviatorGame() {
       socket.off("aviator:started", handleStarted);
       socket.off("aviator:multiplier", handleMultiplier);
       socket.off("aviator:crashed", handleCrashed);
+      socket.off("aviator:bet", handleBet);
+      socket.off("aviator:cashout", handleCashout);
     };
   }, []);
 
@@ -543,6 +565,8 @@ export default function AviatorGame() {
               roundId={roundId}
               user={user}
               userBets={userBets}
+              onSocketBet={socketBet}
+              onSocketCashout={socketCashout}
             />
           </div>
 

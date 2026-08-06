@@ -138,17 +138,21 @@ export default function AviatorLiveBets({
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data)) {
-            const dbFormatted: LiveBetItem[] = data.map((b: any, i: number) => ({
-              id: b.id || `db-bet-${i}`,
-              username: b.username || formatMaskedPhone(),
-              avatarColor: AVATAR_COLORS[i % AVATAR_COLORS.length],
-              amount: b.amount,
-              cashedOut: b.cashedOut || b.status === "cashed_out",
-              cashedOutAt: b.cashedOutAt,
-              payout: b.payout,
-              targetMultiplier: b.cashedOutAt || undefined,
-              isUser: false,
-            }));
+            const myMaskedPhone = user?.phone ? formatMaskedPhone(user.phone) : null;
+            const dbFormatted: LiveBetItem[] = data.map((b: any, i: number) => {
+              const isCurrentUser = Boolean(myMaskedPhone && b.username === myMaskedPhone);
+              return {
+                id: b.id || `db-bet-${i}`,
+                username: b.username || formatMaskedPhone(),
+                avatarColor: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                amount: b.amount,
+                cashedOut: b.cashedOut || b.status === "cashed_out",
+                cashedOutAt: b.cashedOutAt,
+                payout: b.payout,
+                targetMultiplier: b.cashedOutAt || undefined,
+                isUser: isCurrentUser,
+              };
+            });
             setLiveBets((prev) => {
               const combined = [...dbFormatted, ...prev];
               return Array.from(new Map(combined.map((item) => [item.id, item])).values());
@@ -161,21 +165,28 @@ export default function AviatorLiveBets({
     };
 
     fetchRoundBets();
-  }, [roundId]);
+  }, [roundId, user]);
 
-  // Handle Socket Bet Event — only add bets from OTHER players
+  // Handle Real Socket Bet Event — add real bets placed by other players over socket
   useEffect(() => {
     if (!onSocketBet) return;
-    if (onSocketBet.isUser) return; // skip own bet
-    setLiveBets((prev) => [onSocketBet, ...prev]);
-  }, [onSocketBet]);
+    const myMaskedPhone = user?.phone ? formatMaskedPhone(user.phone) : null;
+    const isCurrentUser = Boolean(myMaskedPhone && onSocketBet.username === myMaskedPhone);
 
-  // Handle Socket Cashout Event
+    setLiveBets((prev) => {
+      if (prev.some((b) => b.id === onSocketBet.id)) return prev;
+      return [{ ...onSocketBet, isUser: isCurrentUser }, ...prev];
+    });
+  }, [onSocketBet, user]);
+
+  // Handle Real Socket Cashout Event
   useEffect(() => {
     if (!onSocketCashout) return;
     setLiveBets((prev) =>
       prev.map((b) =>
-        b.roundId === onSocketCashout.roundId && !b.cashedOut
+        (b.roundId === onSocketCashout.roundId || !onSocketCashout.roundId) &&
+          (!b.username || b.username === onSocketCashout.username) &&
+          !b.cashedOut
           ? {
             ...b,
             cashedOut: true,
@@ -188,12 +199,13 @@ export default function AviatorLiveBets({
     );
   }, [onSocketCashout]);
 
-  // Update live bets state on round phase changes
+  // Handle real round phase transitions
   useEffect(() => {
     if (phase === "waiting" && prevPhaseRef.current !== "waiting") {
-      // Clean slate for new round - strictly real DB & socket bets
+      // Clean slate for new round — strictly real DB & socket bets
       setLiveBets([]);
     } else if (phase === "crashed" && prevPhaseRef.current === "flying") {
+      // Mark all un-cashed-out real bets as crashed
       setLiveBets((prev) =>
         prev.map((bet) => (!bet.cashedOut ? { ...bet, crashed: true } : bet))
       );
@@ -259,11 +271,10 @@ export default function AviatorLiveBets({
   const allUserBetsCombined = [...userBets, ...dbUserBets];
   const uniqueUserBets = Array.from(new Map(allUserBetsCombined.map((b) => [b.id, b])).values());
 
-  // Stats calculation — exclude the current user's own bets from counts
-  const otherBets = liveBets.filter((b) => !b.isUser);
-  const totalBetsCount = otherBets.length;
-  const totalCashedOutCount = otherBets.filter((b) => b.cashedOut).length;
-  const totalPayoutSum = otherBets
+  // Stats calculation across all active live bets
+  const totalBetsCount = liveBets.length;
+  const totalCashedOutCount = liveBets.filter((b) => b.cashedOut).length;
+  const totalPayoutSum = liveBets
     .filter((b) => b.cashedOut && b.payout)
     .reduce((sum, b) => sum + (b.payout || 0), 0);
 
@@ -341,14 +352,14 @@ export default function AviatorLiveBets({
 
           {/* SCROLLABLE BETS LIST */}
           <div className="flex-1 overflow-y-auto divide-y divide-[#1A253D] scrollbar-thin scrollbar-thumb-[#22304A]">
-            {otherBets.length === 0 ? (
+            {liveBets.length === 0 ? (
               <div className="p-8 text-center text-[#64748B] flex flex-col items-center gap-2">
                 <Users className="w-8 h-8 text-[#22304A]" />
                 <p className="text-xs">No bets placed in this round yet.</p>
-                <p className="text-[11px] text-[#475569]">Bets placed by players in database will appear here live!</p>
+                <p className="text-[11px] text-[#475569]">Bets placed by live players will appear here!</p>
               </div>
             ) : (
-              liveBets.filter((bet) => !bet.isUser).map((bet) => {
+              liveBets.map((bet) => {
                 const isHighMult = bet.cashedOutAt && bet.cashedOutAt >= 10;
                 const isMidMult = bet.cashedOutAt && bet.cashedOutAt >= 2.0;
 
