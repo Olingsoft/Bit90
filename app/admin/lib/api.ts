@@ -1,9 +1,20 @@
 import { API_URL } from '@/lib/api'
 import type { AdminDashboardData } from './types'
 
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('admin_token')
+}
+
 export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const res = await fetch(`${API_URL}admin`, {
-    credentials: 'include',
+    headers,
     cache: 'no-store',
   })
 
@@ -16,10 +27,15 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
 }
 
 export async function saveCrashRange(min: number, max: number) {
+  const token = getAuthToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const res = await fetch(`${API_URL}admin/crash-range`, {
     method: 'PUT',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ min, max }),
   })
 
@@ -32,10 +48,15 @@ export async function saveCrashRange(min: number, max: number) {
 }
 
 export async function saveCrashMode(mode: 'auto' | 'manual') {
+  const token = getAuthToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const res = await fetch(`${API_URL}admin/config`, {
     method: 'PUT',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ crash_mode: mode }),
   })
 
@@ -48,11 +69,24 @@ export async function saveCrashMode(mode: 'auto' | 'manual') {
 }
 
 export async function adminLogout() {
-  await fetch(`${API_URL}admin/logout`, { credentials: 'include' })
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  await fetch(`${API_URL}admin/logout`, { headers })
+  localStorage.removeItem('admin_token')
 }
 
 export async function fetchUsers() {
-  const res = await fetch(`${API_URL}users`, { cache: 'no-store' })
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${API_URL}users`, { headers, cache: 'no-store' })
   if (!res.ok) throw new Error('Failed to load users')
   return res.json()
 }

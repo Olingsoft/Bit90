@@ -37,6 +37,11 @@ export default function AdminLogin() {
         return
       }
 
+      // Store token in localStorage for cross-origin requests
+      if (json.token) {
+        localStorage.setItem('admin_token', json.token)
+      }
+
       router.push('/admin')
     } catch (err: any) {
       setError(err.message || 'Network error. Unable to reach authentication server.')

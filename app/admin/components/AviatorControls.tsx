@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react'
 import { Activity, ShieldCheck, Sliders, TrendingUp, Zap } from 'lucide-react'
-import { saveCrashMode, saveCrashRange } from '../../lib/api'
-import { formatCrashMultiplier } from '../../lib/mock-data'
-import { CopyButton, StatCard } from '../ui'
+import { saveCrashMode, saveCrashRange } from '../lib/api'
+import { formatCrashMultiplier } from '../lib/mock-data'
+import { CopyButton, StatCard } from './ui'
 
 const PHASE_STYLES: Record<string, string> = {
   waiting: 'bg-amber-400/10 text-amber-600 ring-amber-400/30 dark:text-amber-300',
