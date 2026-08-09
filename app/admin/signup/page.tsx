@@ -8,6 +8,8 @@ import { API_URL } from '@/lib/api'
 import Logo from '@/public/bit90logo.png'
 
 export default function AdminSignup() {
+  const [fullName, setFullName] = useState('')
+  const [username, setUsername] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +22,7 @@ export default function AdminSignup() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!phoneNumber || !email || !password || !secret) return
+    if (!fullName || !username || !phoneNumber || !email || !password || !secret) return
 
     setError(null)
     setIsLoading(true)
@@ -31,7 +33,7 @@ export default function AdminSignup() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneNumber, email, password, secret }),
+        body: JSON.stringify({ fullName, username, phone: phoneNumber, email, password, secret }),
       })
 
       const json = await res.json()
@@ -106,6 +108,42 @@ export default function AdminSignup() {
 
           {/* Form */}
           <form onSubmit={submit} className="space-y-4">
+            {/* Full Name Field */}
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-[#7C8AA8] font-bold mb-2">
+                Full Name
+              </label>
+              <div className="relative flex items-center bg-[#0D1424] rounded-xl border border-[#22304A] focus-within:border-[#22D67A] transition-colors overflow-hidden">
+                <span className="pl-3.5 pr-2 text-sm text-[#7C8AA8] select-none">👤</span>
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full bg-transparent py-3.5 pr-4 text-white text-sm outline-none font-medium placeholder-[#3A4A6B]"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Username Field */}
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-[#7C8AA8] font-bold mb-2">
+                Username
+              </label>
+              <div className="relative flex items-center bg-[#0D1424] rounded-xl border border-[#22304A] focus-within:border-[#22D67A] transition-colors overflow-hidden">
+                <span className="pl-3.5 pr-2 text-sm text-[#7C8AA8] select-none">@</span>
+                <input
+                  type="text"
+                  placeholder="johndoe"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-transparent py-3.5 pr-4 text-white text-sm outline-none font-medium placeholder-[#3A4A6B]"
+                  required
+                />
+              </div>
+            </div>
+
             {/* Phone Field */}
             <div>
               <label className="block text-xs uppercase tracking-wide text-[#7C8AA8] font-bold mb-2">
@@ -201,7 +239,7 @@ export default function AdminSignup() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || !phoneNumber || !email || !password || !secret}
+              disabled={isLoading || !fullName || !username || !phoneNumber || !email || !password || !secret}
               className="w-full mt-2 bg-[#22D67A] hover:bg-[#1CBE6B] disabled:bg-[#1C3A2B] disabled:text-[#4A7A64] text-[#0A0F1E] font-bold text-sm py-3.5 rounded-xl transition duration-150 flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg shadow-[#22D67A]/10 cursor-pointer"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >

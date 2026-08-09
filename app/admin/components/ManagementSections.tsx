@@ -484,7 +484,7 @@ export function AdminsSection({ canManage = false, canDelete = false, currentRol
   const [showCreateModal, setShowCreateModal] = React.useState(false)
   const [showRoleModal, setShowRoleModal] = React.useState(false)
   const [selectedAdmin, setSelectedAdmin] = React.useState<any>(null)
-  const [newAdmin, setNewAdmin] = React.useState({ name: '', username: '', email: '', phone: '', role: 'support_admin' })
+  const [newAdmin, setNewAdmin] = React.useState({ fullName: '', username: '', email: '', phone: '', role: 'support_admin' })
   const [admins, setAdmins] = React.useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState('')
@@ -494,19 +494,25 @@ export function AdminsSection({ canManage = false, canDelete = false, currentRol
 
   React.useEffect(() => {
     fetchAdmins()
-      .then((data) => setAdmins(Array.isArray(data.admins) ? data.admins : []))
-      .catch(() => setAdmins([]))
+      .then((data) => {
+        console.log('Fetched admins data:', data)
+        setAdmins(Array.isArray(data.admins) ? data.admins : [])
+      })
+      .catch((error) => {
+        console.error('Failed to fetch admins:', error)
+        setAdmins([])
+      })
       .finally(() => setLoading(false))
   }, [])
 
-  const filtered = useFilteredRows(admins, search, ['username', 'email', 'phone', 'role'])
+  const filtered = useFilteredRows(admins, search, ['fullName', 'username', 'email', 'phoneNumber', 'role'])
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
 
   const handleCreateAdmin = () => {
     console.log('Creating admin:', newAdmin)
     setShowCreateModal(false)
-    setNewAdmin({ name: '', username: '', email: '', phone: '', role: 'support_admin' })
+    setNewAdmin({ fullName: '', username: '', email: '', phone: '', role: 'support_admin' })
   }
 
   const handleAssignRole = async (admin: any) => {
@@ -558,12 +564,13 @@ export function AdminsSection({ canManage = false, canDelete = false, currentRol
         <>
           <DataTable
             columns={[
+              { key: 'fullName', label: 'Full Name', render: (r) => String(r.fullName ?? '—') },
               { key: 'username', label: 'Username', render: (r) => String(r.username ?? '—') },
               { key: 'email', label: 'Email', render: (r) => String(r.email ?? '—') },
-              { key: 'phone', label: 'Phone', render: (r) => String(r.phone ?? '—') },
+              { key: 'phoneNumber', label: 'Phone', render: (r) => String(r.phoneNumber ?? '—') },
               { key: 'role', label: 'Role', render: (r) => <span className="font-medium">{formatRoleLabel(String(r.role))}</span> },
-              { key: 'isAdmin', label: 'Admin', render: (r) => <StatusBadge status={r.isAdmin ? 'active' : 'pending'} /> },
-              { key: 'createdAt', label: 'Created', render: (r) => r.createdAt ? formatDate(String(r.createdAt)) : '—' },
+              { key: 'status', label: 'Status', render: (r) => <StatusBadge status={String(r.status)} /> },
+              { key: 'lastLogin', label: 'Last Login', render: (r) => r.lastLogin ? formatDate(String(r.lastLogin)) : '—' },
               {
                 key: 'actions',
                 label: 'Actions',
@@ -592,8 +599,8 @@ export function AdminsSection({ canManage = false, canDelete = false, currentRol
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
                 <input
                   type="text"
-                  value={newAdmin.name}
-                  onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
+                  value={newAdmin.fullName}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, fullName: e.target.value })}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
                 />
               </div>
@@ -658,7 +665,7 @@ export function AdminsSection({ canManage = false, canDelete = false, currentRol
             <div className="mt-4 space-y-4">
               <div className="rounded-lg bg-slate-50 p-3 dark:bg-white/[0.03]">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  <span className="font-medium text-slate-900 dark:text-slate-100">Admin:</span> {selectedAdmin.username || selectedAdmin.phone}
+                  <span className="font-medium text-slate-900 dark:text-slate-100">Admin:</span> {selectedAdmin.fullName || selectedAdmin.username}
                 </p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   <span className="font-medium text-slate-900 dark:text-slate-100">Current Role:</span> {formatRoleLabel(selectedAdmin.role)}

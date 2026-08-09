@@ -98,8 +98,12 @@ export async function fetchAdmins() {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${API_URL}admin-management/admins`, { headers, cache: 'no-store' })
-  if (!res.ok) throw new Error('Failed to load admins')
+  const res = await fetch(`${API_URL}admin/admins`, { headers, cache: 'no-store' })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    console.error('Fetch admins error:', res.status, body)
+    throw new Error(body.message || `Failed to load admins (Status: ${res.status})`)
+  }
   return res.json()
 }
 
@@ -110,7 +114,7 @@ export async function updateAdminRole(adminId: string, role: string) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${API_URL}admin-management/admins/${adminId}/role`, {
+  const res = await fetch(`${API_URL}admin/admins/${adminId}/role`, {
     method: 'PUT',
     headers,
     body: JSON.stringify({ role }),
