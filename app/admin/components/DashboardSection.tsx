@@ -23,14 +23,14 @@ import {
 import { StatCard, MiniBarChart, CopyButton } from './ui'
 
 const PHASE_STYLES: Record<string, string> = {
-  waiting: 'bg-amber-400/10 text-amber-600 ring-amber-400/30 dark:text-amber-300',
-  flying: 'bg-sky-400/10 text-sky-600 ring-sky-400/30 dark:text-sky-300',
-  crashed: 'bg-rose-400/10 text-rose-600 ring-rose-400/30 dark:text-rose-300',
+  waiting: 'bg-amber-400/10 text-amber-700 ring-amber-400/30 dark:text-amber-300',
+  flying: 'bg-sky-400/10 text-sky-700 ring-sky-400/30 dark:text-sky-300',
+  crashed: 'bg-rose-400/10 text-rose-700 ring-rose-400/30 dark:text-rose-300',
 }
 
 function LiveRoundSummary({ publicState }: { publicState?: Record<string, unknown> }) {
   const phase = String(publicState?.phase ?? 'N/A')
-  const phaseClass = PHASE_STYLES[phase] ?? 'bg-slate-500/10 text-slate-600 ring-slate-500/30'
+  const phaseClass = PHASE_STYLES[phase] ?? 'bg-slate-500/10 text-slate-700 ring-slate-500/30'
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/[0.06] dark:bg-[#12161f]">

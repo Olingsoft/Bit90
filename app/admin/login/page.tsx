@@ -8,7 +8,7 @@ import { API_URL } from '@/lib/api'
 import Logo from '@/public/bit90logo.png'
 
 export default function AdminLogin() {
-  const [phone, setPhone] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -17,7 +17,7 @@ export default function AdminLogin() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!phone || !password) return
+    if (!phoneNumber || !password) return
 
     setError(null)
     setIsLoading(true)
@@ -28,7 +28,7 @@ export default function AdminLogin() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password }),
+        body: JSON.stringify({ phone: phoneNumber, password }),
       })
 
       const json = await res.json()
@@ -118,8 +118,8 @@ export default function AdminLogin() {
                 <input
                   type="text"
                   placeholder="0712345678 or +254712345678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                   className="w-full bg-transparent py-3.5 pr-4 text-white text-sm outline-none font-medium placeholder-[#3A4A6B]"
                   required
                 />
@@ -156,7 +156,7 @@ export default function AdminLogin() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || !phone || !password}
+              disabled={isLoading || !phoneNumber || !password}
               className="w-full mt-2 bg-[#F5A623] hover:bg-[#E0961C] disabled:bg-[#3A2D16] disabled:text-[#7C663D] text-[#0B0E14] font-bold text-sm py-3.5 rounded-xl transition duration-150 flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg shadow-[#F5A623]/10 cursor-pointer"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >

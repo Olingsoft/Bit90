@@ -26,29 +26,11 @@ import {
   Moon,
   Search,
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { fetchAdminDashboard, adminLogout } from './lib/api'
-import { getVisibleNav, canAccessPage, normalizeAdminRole, ROLE_LABELS, hasPermission } from './lib/rbac'
-import type { AdminDashboardData, AdminPage, AdminRole } from './lib/types'
-import { DashboardSection } from './components/DashboardSection'
-import { AviatorControls } from './components/AviatorControls'
-import {
-  UsersSection,
-  KycSection,
-  DepositsSection,
-  WithdrawalsSection,
-  BonusesSection,
-  ReferralsSection,
-  ReportsSection,
-  SupportSection,
-  PaymentsSection,
-  ServerSection,
-  NotificationsSection,
-  AuditSection,
-  AdminsSection,
-  SettingsSection,
-} from './components/ManagementSections'
-import { EmptyState, Toast } from './components/ui'
+import { useRouter, usePathname } from 'next/navigation'
+import { fetchAdminDashboard, adminLogout } from '../lib/api'
+import { getVisibleNav, canAccessPage, normalizeAdminRole, ROLE_LABELS, hasPermission } from '../lib/rbac'
+import type { AdminDashboardData, AdminPage, AdminRole } from '../lib/types'
+import { Toast } from './ui'
 
 const NAV_ICONS: Record<AdminPage, React.ElementType> = {
   dashboard: LayoutDashboard,
@@ -71,15 +53,21 @@ const NAV_ICONS: Record<AdminPage, React.ElementType> = {
 
 const SESSION_TIMEOUT_MS = 60 * 60 * 1000 // 1 hour — matches JWT cookie
 
-export default function AdminPage() {
+interface AdminLayoutProps {
+  children: React.ReactNode
+  currentPage: AdminPage
+  pageTitle?: string
+}
+
+export function AdminLayout({ children, currentPage, pageTitle }: AdminLayoutProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [activePage, setActivePage] = useState<AdminPage>('dashboard')
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [globalSearch, setGlobalSearch] = useState('')
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'error' | 'info' } | null>(null)
@@ -161,14 +149,6 @@ export default function AdminPage() {
     }
   }, [theme])
 
-  // Ensure active page is allowed for role
-  useEffect(() => {
-    if (!canAccessPage(adminRole, activePage)) {
-      const fallback = visibleNav[0]?.key ?? 'dashboard'
-      setActivePage(fallback)
-    }
-  }, [adminRole, activePage, visibleNav])
-
   async function handleManualRefresh() {
     setRefreshing(true)
     try {
@@ -190,68 +170,12 @@ export default function AdminPage() {
       setToast({ message: 'You do not have permission to access this section.', tone: 'error' })
       return
     }
-    // Navigate to separate pages for better organization
     if (page === 'dashboard') {
-      setActivePage(page)
+      router.push('/admin')
     } else {
       router.push(`/admin/${page}`)
     }
     setSidebarOpen(false)
-  }
-
-  function renderContent() {
-    if (!canAccessPage(adminRole, activePage)) {
-      return (
-        <EmptyState
-          title="Access Denied"
-          description="Your role does not have permission to view this section."
-        />
-      )
-    }
-
-    switch (activePage) {
-      case 'dashboard':
-        return <DashboardSection liveData={data ?? undefined} />
-      case 'users':
-        return <UsersSection />
-      case 'kyc':
-        return <KycSection />
-      case 'deposits':
-        return <DepositsSection />
-      case 'withdrawals':
-        return <WithdrawalsSection />
-      case 'bonuses':
-        return <BonusesSection />
-      case 'referrals':
-        return <ReferralsSection />
-      case 'reports':
-        return <ReportsSection />
-      case 'support':
-        return <SupportSection />
-      case 'payments':
-        return <PaymentsSection />
-      case 'server':
-        return <ServerSection />
-      case 'notifications':
-        return <NotificationsSection />
-      case 'audit':
-        return <AuditSection />
-      case 'admins':
-        return <AdminsSection />
-      case 'aviator':
-        return hasPermission(adminRole, 'aviator.control') && data ? (
-          <AviatorControls data={data} onRefresh={loadDashboard} />
-        ) : (
-          <EmptyState
-            title="Super Admin Required"
-            description="Aviator crash mode, range, and next crash point controls are restricted to Super Admin."
-          />
-        )
-      case 'settings':
-        return <SettingsSection />
-      default:
-        return null
-    }
   }
 
   const groupedNav = useMemo(() => {
@@ -283,6 +207,8 @@ export default function AdminPage() {
     )
   }
 
+  const currentPageLabel = pageTitle || visibleNav.find((n) => n.key === currentPage)?.label || currentPage
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 dark:bg-[#0a0d12] dark:text-slate-200">
       {sidebarOpen && (
@@ -313,12 +239,13 @@ export default function AdminPage() {
               <div className="space-y-0.5">
                 {items.map(({ key, label }) => {
                   const Icon = NAV_ICONS[key]
+                  const isActive = pathname === `/admin/${key}` || (key === 'dashboard' && pathname === '/admin')
                   return (
                     <button
                       key={key}
                       onClick={() => navigateTo(key)}
                       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
-                        activePage === key
+                        isActive
                           ? 'bg-sky-500/10 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:text-sky-300'
                           : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-slate-200'
                       }`}
@@ -351,7 +278,7 @@ export default function AdminPage() {
               <Menu size={20} />
             </button>
             <h1 className="truncate text-lg font-semibold capitalize tracking-tight text-slate-900 dark:text-slate-100">
-              {visibleNav.find((n) => n.key === activePage)?.label ?? activePage}
+              {currentPageLabel}
             </h1>
             <span className="hidden text-xs text-slate-400 sm:inline">
               {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : ''}
@@ -401,10 +328,18 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <div className="flex-1 space-y-6 p-4 sm:p-6">{renderContent()}</div>
+        <div className="flex-1 overflow-auto p-6">
+          {children}
+        </div>
       </main>
 
-      {toast && <Toast message={toast.message} tone={toast.tone} />}
+      {toast && (
+        <Toast
+          message={toast.message}
+          tone={toast.tone}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }

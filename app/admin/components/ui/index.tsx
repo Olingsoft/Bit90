@@ -16,10 +16,10 @@ export function StatCard({
   tone?: 'neutral' | 'positive' | 'negative' | 'warning'
 }) {
   const toneClasses = {
-    neutral: 'text-slate-100 dark:text-slate-100',
-    positive: 'text-emerald-500 dark:text-emerald-400',
-    negative: 'text-rose-500 dark:text-rose-400',
-    warning: 'text-amber-500 dark:text-amber-400',
+    neutral: 'text-slate-900 dark:text-slate-100',
+    positive: 'text-emerald-600 dark:text-emerald-400',
+    negative: 'text-rose-600 dark:text-rose-400',
+    warning: 'text-amber-600 dark:text-amber-400',
   }[tone]
 
   return (
@@ -38,25 +38,25 @@ export function StatCard({
 
 export function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    active: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
-    completed: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
-    approved: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
-    pending: 'bg-amber-500/10 text-amber-600 ring-amber-500/30 dark:text-amber-300',
-    open: 'bg-sky-500/10 text-sky-600 ring-sky-500/30 dark:text-sky-300',
-    hold: 'bg-orange-500/10 text-orange-600 ring-orange-500/30 dark:text-orange-300',
-    rejected: 'bg-rose-500/10 text-rose-600 ring-rose-500/30 dark:text-rose-300',
-    suspended: 'bg-rose-500/10 text-rose-600 ring-rose-500/30 dark:text-rose-300',
-    closed: 'bg-slate-500/10 text-slate-600 ring-slate-500/30 dark:text-slate-400',
-    draft: 'bg-slate-500/10 text-slate-600 ring-slate-500/30 dark:text-slate-400',
-    urgent: 'bg-rose-500/10 text-rose-600 ring-rose-500/30 dark:text-rose-300',
-    high: 'bg-orange-500/10 text-orange-600 ring-orange-500/30 dark:text-orange-300',
-    normal: 'bg-slate-500/10 text-slate-600 ring-slate-500/30 dark:text-slate-400',
+    active: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300',
+    completed: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300',
+    approved: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300',
+    pending: 'bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-300',
+    open: 'bg-sky-500/10 text-sky-700 ring-sky-500/30 dark:text-sky-300',
+    hold: 'bg-orange-500/10 text-orange-700 ring-orange-500/30 dark:text-orange-300',
+    rejected: 'bg-rose-500/10 text-rose-700 ring-rose-500/30 dark:text-rose-300',
+    suspended: 'bg-rose-500/10 text-rose-700 ring-rose-500/30 dark:text-rose-300',
+    closed: 'bg-slate-500/10 text-slate-700 ring-slate-500/30 dark:text-slate-400',
+    draft: 'bg-slate-500/10 text-slate-700 ring-slate-500/30 dark:text-slate-400',
+    urgent: 'bg-rose-500/10 text-rose-700 ring-rose-500/30 dark:text-rose-300',
+    high: 'bg-orange-500/10 text-orange-700 ring-orange-500/30 dark:text-orange-300',
+    normal: 'bg-slate-500/10 text-slate-700 ring-slate-500/30 dark:text-slate-400',
   }
 
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ring-1 ring-inset ${
-        styles[status.toLowerCase()] ?? 'bg-slate-500/10 text-slate-600 ring-slate-500/30'
+        styles[status.toLowerCase()] ?? 'bg-slate-500/10 text-slate-700 ring-slate-500/30'
       }`}
     >
       {status}
@@ -176,15 +176,23 @@ export function MiniBarChart({
   )
 }
 
-export function Toast({ message, tone }: { message: string; tone: 'success' | 'error' | 'info' }) {
+export function Toast({ message, tone, onClose }: { message: string; tone: 'success' | 'error' | 'info'; onClose?: () => void }) {
   const tones = {
-    success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-    error: 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300',
-    info: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300',
+    error: 'border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-300',
+    info: 'border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-300',
   }
   return (
-    <div className={`fixed bottom-6 right-6 z-50 rounded-lg border px-4 py-3 text-sm shadow-lg ${tones[tone]}`}>
-      {message}
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg ${tones[tone]}`}>
+      <span>{message}</span>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="ml-2 text-current opacity-60 hover:opacity-100"
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }
@@ -293,7 +301,7 @@ export function ActionButton({
   const styles = {
     primary: 'bg-sky-500 text-white hover:bg-sky-400',
     secondary: 'border border-slate-200 text-slate-700 dark:border-white/10 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05]',
-    danger: 'bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/30 dark:text-rose-300 hover:bg-rose-500/20',
+    danger: 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-500/30 dark:text-rose-300 hover:bg-rose-500/20',
   }
   return (
     <button

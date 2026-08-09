@@ -90,3 +90,36 @@ export async function fetchUsers() {
   if (!res.ok) throw new Error('Failed to load users')
   return res.json()
 }
+
+export async function fetchAdmins() {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${API_URL}admin-management/admins`, { headers, cache: 'no-store' })
+  if (!res.ok) throw new Error('Failed to load admins')
+  return res.json()
+}
+
+export async function updateAdminRole(adminId: string, role: string) {
+  const token = getAuthToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${API_URL}admin-management/admins/${adminId}/role`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ role }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.message || `Status ${res.status}`)
+  }
+
+  return res.json()
+}

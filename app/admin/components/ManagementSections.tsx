@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import {
   MOCK_KYC,
   MOCK_DEPOSITS,
@@ -14,7 +14,7 @@ import {
   formatCurrency,
   formatDate,
 } from '../lib/mock-data'
-import { fetchUsers } from '../lib/api'
+import { fetchUsers, fetchAdmins, updateAdminRole } from '../lib/api'
 import {
   SectionHeader,
   SearchInput,
@@ -47,14 +47,14 @@ function ExportButtons() {
   )
 }
 
-export function UsersSection() {
-  const [search, setSearch] = useState('')
-  const [users, setUsers] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
+export function UsersSection({ canEdit = false, canFreeze = false }: { canEdit?: boolean; canFreeze?: boolean }) {
+  const [search, setSearch] = React.useState('')
+  const [users, setUsers] = React.useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [page, setPage] = React.useState(1)
   const pageSize = 10
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchUsers()
       .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch(() => setUsers([]))
@@ -97,8 +97,8 @@ export function UsersSection() {
                 render: () => (
                   <div className="flex flex-wrap gap-1">
                     <ActionButton variant="secondary">View</ActionButton>
-                    <ActionButton variant="secondary">Edit</ActionButton>
-                    <ActionButton variant="danger">Freeze</ActionButton>
+                    {canEdit && <ActionButton variant="secondary">Edit</ActionButton>}
+                    {canFreeze && <ActionButton variant="danger">Freeze</ActionButton>}
                   </div>
                 ),
               },
@@ -113,8 +113,8 @@ export function UsersSection() {
   )
 }
 
-export function KycSection() {
-  const [search, setSearch] = useState('')
+export function KycSection({ canApprove = false, canReject = false, canRequestResubmit = false }: { canApprove?: boolean; canReject?: boolean; canRequestResubmit?: boolean }) {
+  const [search, setSearch] = React.useState('')
   const filtered = useFilteredRows(MOCK_KYC as unknown as Record<string, unknown>[], search, ['user', 'id', 'docType'])
 
   return (
@@ -133,8 +133,9 @@ export function KycSection() {
             render: () => (
               <div className="flex gap-1">
                 <ActionButton>View</ActionButton>
-                <ActionButton variant="secondary">Approve</ActionButton>
-                <ActionButton variant="danger">Reject</ActionButton>
+                {canApprove && <ActionButton variant="secondary">Approve</ActionButton>}
+                {canReject && <ActionButton variant="danger">Reject</ActionButton>}
+                {canRequestResubmit && <ActionButton variant="secondary">Request Resubmit</ActionButton>}
               </div>
             ),
           },
@@ -145,8 +146,8 @@ export function KycSection() {
   )
 }
 
-export function DepositsSection() {
-  const [search, setSearch] = useState('')
+export function DepositsSection({ canApprove = false }: { canApprove?: boolean }) {
+  const [search, setSearch] = React.useState('')
   const filtered = useFilteredRows(MOCK_DEPOSITS as unknown as Record<string, unknown>[], search, ['user', 'id', 'txId'])
 
   return (
@@ -168,7 +169,7 @@ export function DepositsSection() {
             render: (r) => (
               <div className="flex gap-1">
                 <ActionButton variant="secondary">View</ActionButton>
-                {r.status === 'pending' && <ActionButton>Approve</ActionButton>}
+                {canApprove && r.status === 'pending' && <ActionButton>Approve</ActionButton>}
               </div>
             ),
           },
@@ -179,8 +180,8 @@ export function DepositsSection() {
   )
 }
 
-export function WithdrawalsSection() {
-  const [search, setSearch] = useState('')
+export function WithdrawalsSection({ canApprove = false, canReject = false }: { canApprove?: boolean; canReject?: boolean }) {
+  const [search, setSearch] = React.useState('')
   const filtered = useFilteredRows(MOCK_WITHDRAWALS as unknown as Record<string, unknown>[], search, ['user', 'id'])
 
   return (
@@ -200,9 +201,10 @@ export function WithdrawalsSection() {
             label: 'Actions',
             render: (r) => (
               <div className="flex gap-1">
-                <ActionButton>Approve</ActionButton>
-                <ActionButton variant="danger">Reject</ActionButton>
-                {r.status !== 'hold' && <ActionButton variant="secondary">Hold</ActionButton>}
+                {canApprove && <ActionButton>Approve</ActionButton>}
+                {canReject && <ActionButton variant="danger">Reject</ActionButton>}
+                {(canApprove || canReject) && r.status !== 'hold' && <ActionButton variant="secondary">Hold</ActionButton>}
+                {!canApprove && !canReject && <ActionButton variant="secondary">View</ActionButton>}
               </div>
             ),
           },
@@ -310,8 +312,8 @@ export function ReportsSection() {
   )
 }
 
-export function SupportSection() {
-  const [search, setSearch] = useState('')
+export function SupportSection({ canChat = false, canResolve = false }: { canChat?: boolean; canResolve?: boolean }) {
+  const [search, setSearch] = React.useState('')
   const filtered = useFilteredRows(MOCK_TICKETS as unknown as Record<string, unknown>[], search, ['subject', 'user', 'id'])
 
   return (
@@ -331,8 +333,9 @@ export function SupportSection() {
             label: 'Actions',
             render: () => (
               <div className="flex gap-1">
-                <ActionButton>Open Chat</ActionButton>
-                <ActionButton variant="secondary">Assign</ActionButton>
+                {canChat && <ActionButton>Open Chat</ActionButton>}
+                {canResolve && <ActionButton variant="secondary">Resolve</ActionButton>}
+                {(!canChat && !canResolve) && <ActionButton variant="secondary">View</ActionButton>}
               </div>
             ),
           },
@@ -477,36 +480,213 @@ export function AuditSection() {
   )
 }
 
-export function AdminsSection() {
+export function AdminsSection({ canManage = false, canDelete = false, currentRole = 'viewer' }: { canManage?: boolean; canDelete?: boolean; currentRole?: string }) {
+  const [showCreateModal, setShowCreateModal] = React.useState(false)
+  const [showRoleModal, setShowRoleModal] = React.useState(false)
+  const [selectedAdmin, setSelectedAdmin] = React.useState<any>(null)
+  const [newAdmin, setNewAdmin] = React.useState({ name: '', username: '', email: '', phone: '', role: 'support_admin' })
+  const [admins, setAdmins] = React.useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [search, setSearch] = React.useState('')
+  const [page, setPage] = React.useState(1)
+  const pageSize = 10
+  const isSuperAdmin = currentRole === 'super_admin'
+
+  React.useEffect(() => {
+    fetchAdmins()
+      .then((data) => setAdmins(Array.isArray(data.admins) ? data.admins : []))
+      .catch(() => setAdmins([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = useFilteredRows(admins, search, ['username', 'email', 'phone', 'role'])
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+
+  const handleCreateAdmin = () => {
+    console.log('Creating admin:', newAdmin)
+    setShowCreateModal(false)
+    setNewAdmin({ name: '', username: '', email: '', phone: '', role: 'support_admin' })
+  }
+
+  const handleAssignRole = async (admin: any) => {
+    setSelectedAdmin(admin)
+    setShowRoleModal(true)
+  }
+
+  const handleRoleUpdate = async (newRole: string) => {
+    if (!selectedAdmin) return
+    try {
+      await updateAdminRole(selectedAdmin._id as string, newRole)
+      setAdmins(admins.map((a) => a._id === selectedAdmin._id ? { ...a, role: newRole } : a))
+      setShowRoleModal(false)
+      setSelectedAdmin(null)
+    } catch (error) {
+      console.error('Failed to update role:', error)
+      alert('Failed to update role')
+    }
+  }
+
+  const formatRoleLabel = (role: string) => {
+    const roleLabels: Record<string, string> = {
+      super_admin: 'Super Admin',
+      finance_admin: 'Finance Admin',
+      support_admin: 'Support Admin',
+      kyc_admin: 'KYC Admin',
+      marketing_admin: 'Marketing Admin',
+      system_admin: 'System Admin',
+      unassigned: 'Unassigned',
+    }
+    return roleLabels[role] || role
+  }
+
   return (
     <div className="space-y-4">
       <SectionHeader
         title="Administrators"
         description="Manage admin accounts, roles, and access status."
-        action={<ActionButton>Create Admin</ActionButton>}
+        action={
+          <>
+            {isSuperAdmin && <ActionButton onClick={() => setShowCreateModal(true)}>Create Admin</ActionButton>}
+            <SearchInput value={search} onChange={setSearch} placeholder="Search admins..." />
+          </>
+        }
       />
-      <DataTable
-        columns={[
-          { key: 'name', label: 'Full Name' },
-          { key: 'username', label: 'Username' },
-          { key: 'email', label: 'Email' },
-          { key: 'phone', label: 'Phone' },
-          { key: 'role', label: 'Role' },
-          { key: 'status', label: 'Status', render: (r) => <StatusBadge status={String(r.status)} /> },
-          { key: 'lastLogin', label: 'Last Login', render: (r) => formatDate(String(r.lastLogin)) },
-          {
-            key: 'actions',
-            label: 'Actions',
-            render: () => (
-              <div className="flex gap-1">
-                <ActionButton variant="secondary">Edit</ActionButton>
-                <ActionButton variant="danger">Suspend</ActionButton>
+      {loading ? (
+        <EmptyState title="Loading admins..." description="Fetching admin records from the API." />
+      ) : (
+        <>
+          <DataTable
+            columns={[
+              { key: 'username', label: 'Username', render: (r) => String(r.username ?? '—') },
+              { key: 'email', label: 'Email', render: (r) => String(r.email ?? '—') },
+              { key: 'phone', label: 'Phone', render: (r) => String(r.phone ?? '—') },
+              { key: 'role', label: 'Role', render: (r) => <span className="font-medium">{formatRoleLabel(String(r.role))}</span> },
+              { key: 'isAdmin', label: 'Admin', render: (r) => <StatusBadge status={r.isAdmin ? 'active' : 'pending'} /> },
+              { key: 'createdAt', label: 'Created', render: (r) => r.createdAt ? formatDate(String(r.createdAt)) : '—' },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (r) => (
+                  <div className="flex gap-1">
+                    {isSuperAdmin && <ActionButton variant="secondary" onClick={() => handleAssignRole(r)}>Assign Role</ActionButton>}
+                    {canManage && <ActionButton variant="secondary">Edit</ActionButton>}
+                    {canDelete && <ActionButton variant="danger">Suspend</ActionButton>}
+                  </div>
+                ),
+              },
+            ]}
+            rows={paged}
+            emptyMessage="No admins found"
+          />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-white/[0.08] dark:bg-[#12161f]">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Create New Admin</h3>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
+                <input
+                  type="text"
+                  value={newAdmin.name}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
+                />
               </div>
-            ),
-          },
-        ]}
-        rows={MOCK_ADMINS as unknown as Record<string, unknown>[]}
-      />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Username</label>
+                <input
+                  type="text"
+                  value={newAdmin.username}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+                <input
+                  type="email"
+                  value={newAdmin.email}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Phone</label>
+                <input
+                  type="tel"
+                  value={newAdmin.phone}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, phone: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
+                />
+              </div>
+              {isSuperAdmin && (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Role</label>
+                  <select
+                    value={newAdmin.role}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
+                  >
+                    <option value="unassigned">Unassigned</option>
+                    <option value="support_admin">Support Admin</option>
+                    <option value="finance_admin">Finance Admin</option>
+                    <option value="kyc_admin">KYC Admin</option>
+                    <option value="marketing_admin">Marketing Admin</option>
+                    <option value="system_admin">System Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <ActionButton variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</ActionButton>
+              <ActionButton onClick={handleCreateAdmin}>Create Admin</ActionButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRoleModal && selectedAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-white/[0.08] dark:bg-[#12161f]">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Assign Role to Admin</h3>
+            <div className="mt-4 space-y-4">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-white/[0.03]">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-medium text-slate-900 dark:text-slate-100">Admin:</span> {selectedAdmin.username || selectedAdmin.phone}
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-medium text-slate-900 dark:text-slate-100">Current Role:</span> {formatRoleLabel(selectedAdmin.role)}
+                </p>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Select New Role</label>
+                <select
+                  defaultValue={selectedAdmin.role}
+                  onChange={(e) => handleRoleUpdate(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-100"
+                >
+                  <option value="unassigned">Unassigned</option>
+                  <option value="support_admin">Support Admin</option>
+                  <option value="finance_admin">Finance Admin</option>
+                  <option value="kyc_admin">KYC Admin</option>
+                  <option value="marketing_admin">Marketing Admin</option>
+                  <option value="system_admin">System Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <ActionButton variant="secondary" onClick={() => { setShowRoleModal(false); setSelectedAdmin(null) }}>Cancel</ActionButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

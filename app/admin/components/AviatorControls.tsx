@@ -7,9 +7,9 @@ import { formatCrashMultiplier } from '../lib/mock-data'
 import { CopyButton, StatCard } from './ui'
 
 const PHASE_STYLES: Record<string, string> = {
-  waiting: 'bg-amber-400/10 text-amber-600 ring-amber-400/30 dark:text-amber-300',
-  flying: 'bg-sky-400/10 text-sky-600 ring-sky-400/30 dark:text-sky-300',
-  crashed: 'bg-rose-400/10 text-rose-600 ring-rose-400/30 dark:text-rose-300',
+  waiting: 'bg-amber-400/10 text-amber-700 ring-amber-400/30 dark:text-amber-300',
+  flying: 'bg-sky-400/10 text-sky-700 ring-sky-400/30 dark:text-sky-300',
+  crashed: 'bg-rose-400/10 text-rose-700 ring-rose-400/30 dark:text-rose-300',
 }
 
 const PHASE_DOT: Record<string, string> = {
@@ -46,7 +46,7 @@ function parseCrashRangeInput(minStr: string, maxStr: string) {
 
 function PublicStateBoard({ publicState }: { publicState: Record<string, unknown> | undefined }) {
   const phase = String(publicState?.phase ?? 'N/A')
-  const phaseClass = PHASE_STYLES[phase] ?? 'bg-slate-500/10 text-slate-600 ring-slate-500/30'
+  const phaseClass = PHASE_STYLES[phase] ?? 'bg-slate-500/10 text-slate-700 ring-slate-500/30'
   const dotClass = PHASE_DOT[phase] ?? 'bg-slate-400'
 
   const rows: { label: string; value: React.ReactNode }[] = [
