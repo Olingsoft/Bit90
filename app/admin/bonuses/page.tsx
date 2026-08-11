@@ -6,16 +6,26 @@ import { fetchAdminDashboard } from '../lib/api'
 import { BonusesSection } from '../components/ManagementSections'
 import { AdminLayout } from '../components/AdminLayout'
 import { SectionHeader } from '../components/ui'
+import { hasPermission, normalizeAdminRole } from '../lib/rbac'
 
 export default function BonusesPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        await fetchAdminDashboard()
+        const response = await fetchAdminDashboard()
+        setData(response)
+        const adminRole = normalizeAdminRole(response?.admin?.role)
+        
+        if (!hasPermission(adminRole, 'bonuses.manage')) {
+          router.push('/admin')
+          return
+        }
+        
         setAuthorized(true)
       } catch (err) {
         router.push('/admin/login')
@@ -38,14 +48,17 @@ export default function BonusesPage() {
     return null
   }
 
+  const adminRole = normalizeAdminRole(data?.admin?.role)
+  const canCreate = hasPermission(adminRole, 'bonuses.create')
+
   return (
     <AdminLayout currentPage="bonuses" pageTitle="Bonuses & Promotions">
       <div className="mx-auto max-w-7xl">
         <SectionHeader
           title="Bonuses & Promotions"
-          description="Create welcome, deposit, cashback, referral, VIP bonuses and promo codes."
+          description={canCreate ? "Create welcome, deposit, cashback, referral, VIP bonuses and promo codes." : "View bonuses and promotions."}
         />
-        <BonusesSection />
+        <BonusesSection canCreate={canCreate} />
       </div>
     </AdminLayout>
   )

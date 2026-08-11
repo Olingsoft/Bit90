@@ -6,16 +6,26 @@ import { fetchAdminDashboard } from '../lib/api'
 import { SettingsSection } from '../components/ManagementSections'
 import { AdminLayout } from '../components/AdminLayout'
 import { SectionHeader } from '../components/ui'
+import { hasPermission, normalizeAdminRole } from '../lib/rbac'
 
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        await fetchAdminDashboard()
+        const response = await fetchAdminDashboard()
+        setData(response)
+        const adminRole = normalizeAdminRole(response?.admin?.role)
+        
+        if (!hasPermission(adminRole, 'settings.manage')) {
+          router.push('/admin')
+          return
+        }
+        
         setAuthorized(true)
       } catch (err) {
         router.push('/admin/login')
@@ -38,14 +48,18 @@ export default function SettingsPage() {
     return null
   }
 
+  const adminRole = normalizeAdminRole(data?.admin?.role)
+  const canChangeSystemSettings = hasPermission(adminRole, 'settings.manage')
+  const canConfigureMaintenance = hasPermission(adminRole, 'maintenance.mode')
+
   return (
     <AdminLayout currentPage="settings" pageTitle="System Settings">
       <div className="mx-auto max-w-7xl">
         <SectionHeader
           title="System Settings"
-          description="Configure platform settings, preferences, and administrative options."
+          description={(canChangeSystemSettings || canConfigureMaintenance) ? "Configure platform settings, preferences, and administrative options." : "View system settings."}
         />
-        <SettingsSection />
+        <SettingsSection canChangeSystemSettings={canChangeSystemSettings} canConfigureMaintenance={canConfigureMaintenance} />
       </div>
     </AdminLayout>
   )

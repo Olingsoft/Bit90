@@ -6,16 +6,26 @@ import { fetchAdminDashboard } from '../lib/api'
 import { ReferralsSection } from '../components/ManagementSections'
 import { AdminLayout } from '../components/AdminLayout'
 import { SectionHeader } from '../components/ui'
+import { hasPermission, normalizeAdminRole } from '../lib/rbac'
 
 export default function ReferralsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        await fetchAdminDashboard()
+        const response = await fetchAdminDashboard()
+        setData(response)
+        const adminRole = normalizeAdminRole(response?.admin?.role)
+        
+        if (!hasPermission(adminRole, 'referrals.manage')) {
+          router.push('/admin')
+          return
+        }
+        
         setAuthorized(true)
       } catch (err) {
         router.push('/admin/login')
@@ -38,14 +48,17 @@ export default function ReferralsPage() {
     return null
   }
 
+  const adminRole = normalizeAdminRole(data?.admin?.role)
+  const canManageCampaigns = hasPermission(adminRole, 'referrals.campaigns')
+
   return (
     <AdminLayout currentPage="referrals" pageTitle="Referral Program">
       <div className="mx-auto max-w-7xl">
         <SectionHeader
           title="Referral Program"
-          description="Manage referral programs, commissions, and tracking."
+          description={canManageCampaigns ? "Manage referral programs, commissions, and tracking." : "View referral program data."}
         />
-        <ReferralsSection />
+        <ReferralsSection canManageCampaigns={canManageCampaigns} />
       </div>
     </AdminLayout>
   )

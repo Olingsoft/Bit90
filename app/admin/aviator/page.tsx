@@ -6,7 +6,7 @@ import { fetchAdminDashboard } from '../lib/api'
 import { AviatorControls } from '../components/AviatorControls'
 import { AdminLayout } from '../components/AdminLayout'
 import { SectionHeader, EmptyState } from '../components/ui'
-import { hasPermission } from '../lib/rbac'
+import { hasPermission, normalizeAdminRole } from '../lib/rbac'
 
 export default function AviatorPage() {
   const router = useRouter()
@@ -19,6 +19,13 @@ export default function AviatorPage() {
       try {
         const response = await fetchAdminDashboard()
         setData(response)
+        const adminRole = normalizeAdminRole(response?.admin?.role)
+        
+        if (!hasPermission(adminRole, 'aviator.control')) {
+          router.push('/admin')
+          return
+        }
+        
         setAuthorized(true)
       } catch (err) {
         router.push('/admin/login')
@@ -41,20 +48,7 @@ export default function AviatorPage() {
     return null
   }
 
-  const adminRole = data?.admin?.role || 'viewer'
-
-  if (!hasPermission(adminRole, 'aviator.control')) {
-    return (
-      <AdminLayout currentPage="aviator" pageTitle="Aviator Game Controls">
-        <div className="mx-auto max-w-7xl">
-          <EmptyState
-            title="Super Admin Required"
-            description="Aviator crash mode, range, and next crash point controls are restricted to Super Admin."
-          />
-        </div>
-      </AdminLayout>
-    )
-  }
+  const adminRole = normalizeAdminRole(data?.admin?.role)
 
   const loadDashboard = async () => {
     try {

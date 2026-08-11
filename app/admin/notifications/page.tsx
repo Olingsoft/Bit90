@@ -6,16 +6,26 @@ import { fetchAdminDashboard } from '../lib/api'
 import { NotificationsSection } from '../components/ManagementSections'
 import { AdminLayout } from '../components/AdminLayout'
 import { SectionHeader } from '../components/ui'
+import { hasPermission, normalizeAdminRole } from '../lib/rbac'
 
 export default function NotificationsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        await fetchAdminDashboard()
+        const response = await fetchAdminDashboard()
+        setData(response)
+        const adminRole = normalizeAdminRole(response?.admin?.role)
+        
+        if (!hasPermission(adminRole, 'notifications.view')) {
+          router.push('/admin')
+          return
+        }
+        
         setAuthorized(true)
       } catch (err) {
         router.push('/admin/login')
@@ -38,14 +48,17 @@ export default function NotificationsPage() {
     return null
   }
 
+  const adminRole = normalizeAdminRole(data?.admin?.role)
+  const canPush = hasPermission(adminRole, 'notifications.push')
+
   return (
     <AdminLayout currentPage="notifications" pageTitle="Notifications">
       <div className="mx-auto max-w-7xl">
         <SectionHeader
           title="Notifications"
-          description="Configure system notifications, alerts, and user communications."
+          description={canPush ? "Configure system notifications, alerts, and user communications." : "View notification settings."}
         />
-        <NotificationsSection />
+        <NotificationsSection canPush={canPush} />
       </div>
     </AdminLayout>
   )

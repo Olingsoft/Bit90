@@ -6,16 +6,26 @@ import { fetchAdminDashboard } from '../lib/api'
 import { ReportsSection } from '../components/ManagementSections'
 import { AdminLayout } from '../components/AdminLayout'
 import { SectionHeader } from '../components/ui'
+import { hasPermission, normalizeAdminRole } from '../lib/rbac'
 
 export default function ReportsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        await fetchAdminDashboard()
+        const response = await fetchAdminDashboard()
+        setData(response)
+        const adminRole = normalizeAdminRole(response?.admin?.role)
+        
+        if (!hasPermission(adminRole, 'reports.view')) {
+          router.push('/admin')
+          return
+        }
+        
         setAuthorized(true)
       } catch (err) {
         router.push('/admin/login')
@@ -38,14 +48,17 @@ export default function ReportsPage() {
     return null
   }
 
+  const adminRole = normalizeAdminRole(data?.admin?.role)
+  const canExport = hasPermission(adminRole, 'reports.export')
+
   return (
     <AdminLayout currentPage="reports" pageTitle="Reports & Analytics">
       <div className="mx-auto max-w-7xl">
         <SectionHeader
           title="Reports & Analytics"
-          description="View financial reports, user analytics, and system performance metrics."
+          description={canExport ? "View financial reports, user analytics, and system performance metrics." : "View financial reports and analytics."}
         />
-        <ReportsSection />
+        <ReportsSection canExport={canExport} />
       </div>
     </AdminLayout>
   )

@@ -70,7 +70,6 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'kyc.approve',
     'kyc.reject',
     'kyc.resubmit',
-    'users.view',
     'notifications.view',
     'audit.view',
   ],
@@ -82,7 +81,6 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'referrals.campaigns',
     'promo.codes',
     'notifications.push',
-    'reports.view',
     'notifications.view',
     'audit.view',
   ],
@@ -97,6 +95,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'notifications.view',
     'audit.view',
   ],
+  unassigned: [],
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -125,6 +124,7 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
   kyc_admin: 'KYC Admin',
   marketing_admin: 'Marketing Admin',
   system_admin: 'System Admin',
+  unassigned: 'Unassigned',
 }
 
 export const ROLE_DESCRIPTIONS: Record<AdminRole, string> = {
@@ -134,6 +134,7 @@ export const ROLE_DESCRIPTIONS: Record<AdminRole, string> = {
   kyc_admin: 'Can review submitted IDs, approve/reject KYC, and request resubmission',
   marketing_admin: 'Can create bonuses, manage referral campaigns, create promo codes, and send push notifications',
   system_admin: 'Can configure payment gateways, view server health, view logs, and configure maintenance mode',
+  unassigned: 'No permissions assigned. Contact super admin for role assignment.',
 }
 
 /** Map legacy backend JWT roles to frontend RBAC roles. */
@@ -152,6 +153,8 @@ export function normalizeAdminRole(raw?: string | null): AdminRole {
       return 'marketing_admin'
     case 'system_admin':
       return 'system_admin'
+    case 'unassigned':
+      return 'unassigned'
     case 'admin':
     default:
       return 'super_admin'
