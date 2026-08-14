@@ -180,8 +180,8 @@ export default function DepositPage() {
       const formattedPhone = phone.startsWith("+")
         ? phone
         : phone.startsWith("254")
-        ? `+${phone}`
-        : `+254${phone.replace(/^0/, "")}`;
+          ? `+${phone}`
+          : `+254${phone.replace(/^0/, "")}`;
 
       const res = await fetch(`${API_URL}users/deposit`, {
         method: "POST",
@@ -298,11 +298,10 @@ export default function DepositPage() {
                     key={val}
                     type="button"
                     onClick={() => handleQuickAmount(val)}
-                    className={`py-2 rounded-lg text-xs font-semibold border transition-all ${
-                      amount === val
+                    className={`py-2 rounded-lg text-xs font-semibold border transition-all ${amount === val
                         ? "bg-[#22D67A]/20 border-[#22D67A] text-[#22D67A]"
                         : "bg-[#0D1424] border-[#22304A] text-[#7C8AA8] hover:text-white hover:border-[#3A4A6B]"
-                    }`}
+                      }`}
                   >
                     +{val}
                   </button>
