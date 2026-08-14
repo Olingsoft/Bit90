@@ -12,7 +12,7 @@ const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 // ─── Toast ────────────────────────────────────────────────────────────────────
 interface ToastProps {
   message: string;
-  balance: number;
+  balance?: number;
   onDone: () => void;
 }
 
@@ -82,11 +82,13 @@ function SuccessToast({ message, balance, onDone }: ToastProps) {
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white leading-snug">Deposit Successful 🎉</p>
+            <p className="text-sm font-semibold text-white leading-snug">Deposit Initiated 🎉</p>
             <p className="text-xs text-[#7C8AA8] mt-0.5 leading-relaxed">{message}</p>
-            <p className="text-xs font-semibold text-[#22D67A] mt-1">
-              New Balance: KSh {balance.toLocaleString()}
-            </p>
+            {balance !== undefined && (
+              <p className="text-xs font-semibold text-[#22D67A] mt-1">
+                New Balance: KSh {balance.toLocaleString()}
+              </p>
+            )}
           </div>
 
           {/* Plane icon */}
@@ -126,7 +128,7 @@ export default function DepositPage() {
     type: "",
     message: "",
   });
-  const [toast, setToast] = useState<{ message: string; balance: number } | null>(null);
+  const [toast, setToast] = useState<{ message: string; balance?: number } | null>(null);
 
   // Page-level auth guard — runs as soon as the session has finished loading.
   // Unauthenticated visitors are immediately sent to login.
@@ -193,23 +195,12 @@ export default function DepositPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to process deposit");
-      }
-
-      const updatedBalance = typeof data.balance === "number" ? data.balance : data.user?.balance;
-
-      // Update user balance in AuthContext and LocalStorage
-      if (user && typeof updatedBalance === "number") {
-        login(activeToken || "", {
-          ...user,
-          balance: updatedBalance,
-        });
+        throw new Error(data.error || data.message || "Failed to send M-Pesa prompt");
       }
 
       // Show toast — redirect happens when toast calls onDone
       setToast({
-        message: `KSh ${Number(amount).toLocaleString()} deposited to your account.`,
-        balance: updatedBalance ?? Number(amount),
+        message: "M-Pesa prompt sent. Check your phone to enter your PIN and complete the transaction.",
       });
     } catch (err) {
       setStatus({

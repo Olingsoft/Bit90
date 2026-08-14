@@ -127,3 +127,52 @@ export async function updateAdminRole(adminId: string, role: string) {
 
   return res.json()
 }
+
+export async function fetchDeposits(page = 1, limit = 50) {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+  const res = await fetch(`${API_URL}admin/finance/deposits?${params}`, {
+    headers,
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.message || `Failed to load deposits (Status: ${res.status})`)
+  }
+
+  return res.json() as Promise<{
+    deposits: Array<Record<string, unknown>>
+    pagination: { currentPage: number; totalPages: number; totalDeposits: number; perPage: number }
+  }>
+}
+
+export async function fetchWithdrawals(page = 1, limit = 50) {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+  const res = await fetch(`${API_URL}admin/finance/withdrawals?${params}`, {
+    headers,
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.message || `Failed to load withdrawals (Status: ${res.status})`)
+  }
+
+  return res.json() as Promise<{
+    withdrawals: Array<Record<string, unknown>>
+    pagination: { currentPage: number; totalPages: number; totalWithdrawals: number; perPage: number }
+  }>
+}
+

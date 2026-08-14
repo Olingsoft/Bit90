@@ -14,7 +14,7 @@ import {
   formatCurrency,
   formatDate,
 } from '../lib/mock-data'
-import { fetchUsers, fetchAdmins, updateAdminRole } from '../lib/api'
+import { fetchUsers, fetchAdmins, updateAdminRole, fetchDeposits, fetchWithdrawals } from '../lib/api'
 import {
   SectionHeader,
   SearchInput,
@@ -148,69 +148,202 @@ export function KycSection({ canApprove = false, canReject = false, canRequestRe
 
 export function DepositsSection({ canApprove = false }: { canApprove?: boolean }) {
   const [search, setSearch] = React.useState('')
-  const filtered = useFilteredRows(MOCK_DEPOSITS as unknown as Record<string, unknown>[], search, ['user', 'id', 'txId'])
+  const [deposits, setDeposits] = React.useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [page, setPage] = React.useState(1)
+  const pageSize = 20
+
+  React.useEffect(() => {
+    fetchDeposits(1, 200)
+      .then((data) => {
+        setDeposits(Array.isArray(data.deposits) ? data.deposits : [])
+        setError(null)
+      })
+      .catch((err) => setError(err.message || 'Failed to load deposits'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = useFilteredRows(deposits, search, ['phone', 'reference', '_id', 'type'])
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
 
   return (
     <div className="space-y-4">
-      <SectionHeader title="Deposits" description="Monitor and approve deposit transactions." action={<ExportButtons />} />
-      <SearchInput value={search} onChange={setSearch} placeholder="Filter deposits..." />
-      <DataTable
-        columns={[
-          { key: 'id', label: 'ID' },
-          { key: 'user', label: 'User' },
-          { key: 'amount', label: 'Amount', render: (r) => formatCurrency(Number(r.amount)) },
-          { key: 'method', label: 'Method' },
-          { key: 'txId', label: 'Transaction ID' },
-          { key: 'status', label: 'Status', render: (r) => <StatusBadge status={String(r.status)} /> },
-          { key: 'date', label: 'Date', render: (r) => formatDate(String(r.date)) },
-          {
-            key: 'actions',
-            label: 'Actions',
-            render: (r) => (
-              <div className="flex gap-1">
-                <ActionButton variant="secondary">View</ActionButton>
-                {canApprove && r.status === 'pending' && <ActionButton>Approve</ActionButton>}
-              </div>
-            ),
-          },
-        ]}
-        rows={filtered}
+      <SectionHeader
+        title="Deposits"
+        description={`Monitor deposit transactions. ${deposits.length} total records.`}
+        action={<ExportButtons />}
       />
+      <SearchInput value={search} onChange={setSearch} placeholder="Filter by phone, reference..." />
+      {loading ? (
+        <EmptyState title="Loading deposits..." description="Fetching deposit records from the API." />
+      ) : error ? (
+        <EmptyState title="Failed to load deposits" description={error} />
+      ) : (
+        <>
+          <DataTable
+            columns={[
+              {
+                key: 'reference',
+                label: 'Reference',
+                render: (r) => (
+                  <span className="font-mono text-xs text-slate-400">{String(r.reference ?? '—')}</span>
+                ),
+              },
+              {
+                key: 'phone',
+                label: 'Phone',
+                render: (r) => String(r.phone ?? (r.userId && typeof r.userId === 'object' ? (r.userId as Record<string, unknown>).phone : '') ?? '—'),
+              },
+              {
+                key: 'amount',
+                label: 'Amount',
+                render: (r) => (
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(r.amount))}</span>
+                ),
+              },
+              {
+                key: 'balanceBefore',
+                label: 'Bal. Before',
+                render: (r) => formatCurrency(Number(r.balanceBefore ?? 0)),
+              },
+              {
+                key: 'balanceAfter',
+                label: 'Bal. After',
+                render: (r) => formatCurrency(Number(r.balanceAfter ?? 0)),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (r) => <StatusBadge status={String(r.status ?? 'completed')} />,
+              },
+              {
+                key: 'createdAt',
+                label: 'Date',
+                render: (r) => formatDate(String(r.createdAt ?? '')),
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (r) => (
+                  <div className="flex gap-1">
+                    <ActionButton variant="secondary">View</ActionButton>
+                    {canApprove && r.status === 'pending' && <ActionButton>Approve</ActionButton>}
+                  </div>
+                ),
+              },
+            ]}
+            rows={paged}
+            emptyMessage="No deposit transactions found"
+          />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
+      )}
     </div>
   )
 }
 
 export function WithdrawalsSection({ canApprove = false, canReject = false }: { canApprove?: boolean; canReject?: boolean }) {
   const [search, setSearch] = React.useState('')
-  const filtered = useFilteredRows(MOCK_WITHDRAWALS as unknown as Record<string, unknown>[], search, ['user', 'id'])
+  const [withdrawals, setWithdrawals] = React.useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [page, setPage] = React.useState(1)
+  const pageSize = 20
+
+  const load = React.useCallback(() => {
+    setLoading(true)
+    fetchWithdrawals(1, 200)
+      .then((data) => {
+        setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : [])
+        setError(null)
+      })
+      .catch((err) => setError(err.message || 'Failed to load withdrawals'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  React.useEffect(() => { load() }, [load])
+
+  const filtered = useFilteredRows(withdrawals, search, ['phone', 'reference', '_id', 'status'])
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const pendingCount = withdrawals.filter((w) => w.status === 'pending').length
 
   return (
     <div className="space-y-4">
-      <SectionHeader title="Withdrawals" description="Approve, reject, or hold withdrawal requests." action={<ExportButtons />} />
-      <SearchInput value={search} onChange={setSearch} placeholder="Filter withdrawals..." />
-      <DataTable
-        columns={[
-          { key: 'id', label: 'ID' },
-          { key: 'user', label: 'User' },
-          { key: 'amount', label: 'Amount', render: (r) => formatCurrency(Number(r.amount)) },
-          { key: 'details', label: 'Bank / M-Pesa' },
-          { key: 'status', label: 'Status', render: (r) => <StatusBadge status={String(r.status)} /> },
-          { key: 'requested', label: 'Requested', render: (r) => formatDate(String(r.requested)) },
-          {
-            key: 'actions',
-            label: 'Actions',
-            render: (r) => (
-              <div className="flex gap-1">
-                {canApprove && <ActionButton>Approve</ActionButton>}
-                {canReject && <ActionButton variant="danger">Reject</ActionButton>}
-                {(canApprove || canReject) && r.status !== 'hold' && <ActionButton variant="secondary">Hold</ActionButton>}
-                {!canApprove && !canReject && <ActionButton variant="secondary">View</ActionButton>}
-              </div>
-            ),
-          },
-        ]}
-        rows={filtered}
+      <SectionHeader
+        title="Withdrawals"
+        description={`Approve, reject, or hold withdrawal requests. ${pendingCount > 0 ? `${pendingCount} pending.` : ''}`}
+        action={<ExportButtons />}
       />
+      <SearchInput value={search} onChange={setSearch} placeholder="Filter by phone, reference, status..." />
+      {loading ? (
+        <EmptyState title="Loading withdrawals..." description="Fetching withdrawal records from the API." />
+      ) : error ? (
+        <EmptyState title="Failed to load withdrawals" description={error} />
+      ) : (
+        <>
+          <DataTable
+            columns={[
+              {
+                key: 'reference',
+                label: 'Reference',
+                render: (r) => (
+                  <span className="font-mono text-xs text-slate-400">{String(r.reference ?? '—')}</span>
+                ),
+              },
+              {
+                key: 'phone',
+                label: 'Phone / M-Pesa',
+                render: (r) => String(r.phone ?? (r.userId && typeof r.userId === 'object' ? (r.userId as Record<string, unknown>).phone : '') ?? '—'),
+              },
+              {
+                key: 'amount',
+                label: 'Amount',
+                render: (r) => (
+                  <span className="font-semibold text-rose-500 dark:text-rose-400">{formatCurrency(Number(r.amount))}</span>
+                ),
+              },
+              {
+                key: 'balanceBefore',
+                label: 'Bal. Before',
+                render: (r) => formatCurrency(Number(r.balanceBefore ?? 0)),
+              },
+              {
+                key: 'balanceAfter',
+                label: 'Bal. After',
+                render: (r) => formatCurrency(Number(r.balanceAfter ?? 0)),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (r) => <StatusBadge status={String(r.status ?? 'pending')} />,
+              },
+              {
+                key: 'createdAt',
+                label: 'Requested',
+                render: (r) => formatDate(String(r.createdAt ?? '')),
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (r) => (
+                  <div className="flex gap-1">
+                    {canApprove && r.status === 'pending' && <ActionButton>Approve</ActionButton>}
+                    {canReject && r.status === 'pending' && <ActionButton variant="danger">Reject</ActionButton>}
+                    {(canApprove || canReject) && r.status === 'pending' && <ActionButton variant="secondary">Hold</ActionButton>}
+                    {(!canApprove && !canReject) || r.status !== 'pending' ? <ActionButton variant="secondary">View</ActionButton> : null}
+                  </div>
+                ),
+              },
+            ]}
+            rows={paged}
+            emptyMessage="No withdrawal transactions found"
+          />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
+      )}
     </div>
   )
 }

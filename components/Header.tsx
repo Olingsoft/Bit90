@@ -79,6 +79,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
               >
                 Logout
               </button>
+
               {/* BALANCE DISPLAY WHEN LOGGED IN */}
               <div className="bg-[#12151C] border border-[#22304A] hover:border-[#22D67A]/40 transition-colors rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0 flex items-center gap-1">
                 <span className="text-[#7C8AA8] font-medium hidden sm:inline">Balance</span>
@@ -86,9 +87,22 @@ export default function Header({ query, setQuery }: HeaderProps) {
                   KSh {formatBalance(user.balance)}
                 </span>
               </div>
+
+              {/* PROFILE ICON — navigates directly to /account */}
+              <Link
+                href="/account"
+                id="account-profile-btn"
+                title="My Profile & Transactions"
+                aria-label="My Profile"
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F5A623] to-[#E0961C] hover:from-[#E0961C] hover:to-[#C8850F] transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#F5A623]/20 hover:shadow-[#F5A623]/35 hover:scale-105 active:scale-95"
+              >
+                <svg className="w-[18px] h-[18px] text-[#0B0E14]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                </svg>
+              </Link>
             </>
           ) : (
-            /* LOGIN BUTTON WHERE BALANCE IS DISPLAYED WHEN NOT LOGGED IN */
+            /* LOGIN BUTTON WHEN NOT LOGGED IN */
             <Link
               href="/login"
               className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] shrink-0"
@@ -122,7 +136,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
             )}
           </button>
 
-          {/* Menu Button for Small Screens */}
+          {/* Hamburger for small screens */}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
@@ -157,18 +171,48 @@ export default function Header({ query, setQuery }: HeaderProps) {
               </span>
             </div>
           )}
-          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-end gap-3">
-            {user && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false)
-                  handleLogout()
-                }}
-                className="bg-[#12151C] border border-[#FF4757]/40 hover:border-[#FF4757] transition-colors text-[#FF4757] font-medium px-4 py-1.5 rounded-md text-[13px]"
+          {user && (
+            <div className="flex gap-2">
+              <Link
+                href="/withdraw"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex-1 text-center bg-[#12151C] border border-[#22D67A]/40 hover:border-[#22D67A] transition-colors text-[#22D67A] font-medium px-4 py-1.5 rounded-md text-[13px]"
               >
-                Logout
-              </button>
+                Withdraw
+              </Link>
+              <Link
+                href="/deposit"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex-1 text-center bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-medium px-4 py-1.5 rounded-md text-[13px]"
+              >
+                Deposit
+              </Link>
+            </div>
+          )}
+          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between gap-3">
+            {user && (
+              <>
+                <Link
+                  href="/account"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-[13px] text-[#8890A3] hover:text-[#ECEEF3] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                  My Profile
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false)
+                    handleLogout()
+                  }}
+                  className="bg-[#12151C] border border-[#FF4757]/40 hover:border-[#FF4757] transition-colors text-[#FF4757] font-medium px-4 py-1.5 rounded-md text-[13px]"
+                >
+                  Logout
+                </button>
+              </>
             )}
           </div>
         </div>
