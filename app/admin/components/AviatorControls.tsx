@@ -161,7 +161,7 @@ export function AviatorControls({
     crashRange?: { min?: number; max?: number }
     game_config?: { crash_mode?: 'auto' | 'manual'; rtp_param?: number; band_weights?: Record<string, number> }
   }
-  onRefresh: () => Promise<void>
+  onRefresh: () => Promise<unknown>
 }) {
   const [crashMin, setCrashMin] = useState('1.00')
   const [crashMax, setCrashMax] = useState('10.00')

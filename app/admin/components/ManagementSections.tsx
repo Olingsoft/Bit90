@@ -348,13 +348,13 @@ export function WithdrawalsSection({ canApprove = false, canReject = false }: { 
   )
 }
 
-export function BonusesSection() {
+export function BonusesSection({ canCreate = false }: { canCreate?: boolean }) {
   return (
     <div className="space-y-4">
       <SectionHeader
         title="Bonuses & Promotions"
         description="Create welcome, deposit, cashback, referral, VIP bonuses and promo codes."
-        action={<ActionButton>Create Bonus</ActionButton>}
+        action={canCreate ? <ActionButton>Create Bonus</ActionButton> : undefined}
       />
       <DataTable
         columns={[
@@ -381,7 +381,7 @@ export function BonusesSection() {
   )
 }
 
-export function ReferralsSection() {
+export function ReferralsSection({ canManageCampaigns = false }: { canManageCampaigns?: boolean }) {
   return (
     <div className="space-y-4">
       <SectionHeader title="Referral System" description="Manage referral commissions, invite codes, and levels." />
@@ -413,7 +413,7 @@ export function ReferralsSection() {
   )
 }
 
-export function ReportsSection() {
+export function ReportsSection({ canExport = false }: { canExport?: boolean }) {
   const reportTypes = [
     'Daily Revenue',
     'Weekly Revenue',
@@ -429,7 +429,7 @@ export function ReportsSection() {
 
   return (
     <div className="space-y-4">
-      <SectionHeader title="Reports" description="Generate and export platform analytics." action={<ExportButtons />} />
+      <SectionHeader title="Reports" description="Generate and export platform analytics." action={canExport ? <ExportButtons /> : undefined} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {reportTypes.map((report) => (
           <div
@@ -521,7 +521,7 @@ export function PaymentsSection() {
   )
 }
 
-export function ServerSection() {
+export function ServerSection({ canViewHealth = false, canViewLogs = false }: { canViewHealth?: boolean; canViewLogs?: boolean }) {
   const m = SERVER_METRICS
 
   return (
@@ -563,7 +563,7 @@ export function ServerSection() {
   )
 }
 
-export function NotificationsSection() {
+export function NotificationsSection({ canPush = false }: { canPush?: boolean }) {
   return (
     <div className="space-y-4">
       <SectionHeader title="Notifications" description="Admin alerts for critical platform events." />
@@ -831,7 +831,7 @@ export function AdminsSection({ canManage = false, canDelete = false, currentRol
   )
 }
 
-export function SettingsSection() {
+export function SettingsSection({ canChangeSystemSettings = false, canConfigureMaintenance = false }: { canChangeSystemSettings?: boolean; canConfigureMaintenance?: boolean }) {
   return (
     <div className="space-y-4">
       <SectionHeader title="System Settings" description="Platform configuration and security preferences." />
