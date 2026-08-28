@@ -19,7 +19,7 @@ export function StatCard({
     neutral: 'text-slate-900 dark:text-slate-100',
     positive: 'text-emerald-600 dark:text-emerald-400',
     negative: 'text-rose-600 dark:text-rose-400',
-    warning: 'text-amber-600 dark:text-amber-400',
+    warning: 'text-orange-600 dark:text-orange-400',
   }[tone]
 
   return (
@@ -41,7 +41,7 @@ export function StatusBadge({ status }: { status: string }) {
     active: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300',
     completed: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300',
     approved: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300',
-    pending: 'bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-300',
+    pending: 'bg-orange-500/10 text-orange-700 ring-orange-500/30 dark:text-orange-300',
     open: 'bg-sky-500/10 text-sky-700 ring-sky-500/30 dark:text-sky-300',
     hold: 'bg-orange-500/10 text-orange-700 ring-orange-500/30 dark:text-orange-300',
     rejected: 'bg-rose-500/10 text-rose-700 ring-rose-500/30 dark:text-rose-300',
@@ -146,7 +146,7 @@ export function MiniBarChart({
 }) {
   const max = Math.max(...data.flatMap((d) => [d.value, d.value2 ?? 0]), 1)
   const barColor = color === 'sky' ? 'bg-sky-500' : color === 'emerald' ? 'bg-emerald-500' : 'bg-violet-500'
-  const bar2Color = secondaryColor === 'rose' ? 'bg-rose-400' : 'bg-amber-400'
+  const bar2Color = secondaryColor === 'rose' ? 'bg-rose-400' : 'bg-orange-400'
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/[0.06] dark:bg-[#12161f]">

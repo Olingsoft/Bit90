@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bit90.com",
   description: "Oline Trading and Crash games in Kenya",
+  icons: {
+    icon: '/bicon.jpg',
+  },
 };
 
 export default function RootLayout({

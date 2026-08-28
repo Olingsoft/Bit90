@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { API_URL } from '@/lib/api'
+import Image from 'next/image'
+import Logo from '@/public/bit90logo.jpg'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -74,7 +76,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={goToLogin}
-              className="w-full bg-amber-500 hover:bg-amber-600 transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
+              className="w-full bg-orange-500 hover:bg-orange-600 transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
             >
               Go to Login
             </button>
@@ -84,8 +86,8 @@ export default function RegisterPage() {
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
-            ♦
+          <div className="mb-4">
+            <Image src={Logo} alt="Bit90 Logo" width={150} height={50} className="h-12 w-auto mx-auto object-contain" priority />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
           <p className="text-gray-400 text-sm">Sign up to get started</p>
@@ -101,7 +103,7 @@ export default function RegisterPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter your phone number"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-amber-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
               required
             />
           </div>
@@ -115,7 +117,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a password"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-amber-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
               required
             />
           </div>
@@ -129,7 +131,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-amber-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
               required
             />
           </div>
@@ -141,7 +143,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 disabled:cursor-not-allowed transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
@@ -149,7 +151,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-gray-400 text-sm mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-amber-500 hover:text-amber-400 font-medium">
+          <Link href="/login" className="text-orange-500 hover:text-orange-400 font-medium">
             Sign In
           </Link>
         </p>

@@ -7,13 +7,13 @@ import { formatCrashMultiplier } from '../lib/mock-data'
 import { CopyButton, StatCard } from './ui'
 
 const PHASE_STYLES: Record<string, string> = {
-  waiting: 'bg-amber-400/10 text-amber-700 ring-amber-400/30 dark:text-amber-300',
+  waiting: 'bg-orange-400/10 text-orange-700 ring-orange-400/30 dark:text-orange-300',
   flying: 'bg-sky-400/10 text-sky-700 ring-sky-400/30 dark:text-sky-300',
   crashed: 'bg-rose-400/10 text-rose-700 ring-rose-400/30 dark:text-rose-300',
 }
 
 const PHASE_DOT: Record<string, string> = {
-  waiting: 'bg-amber-400',
+  waiting: 'bg-orange-400',
   flying: 'bg-sky-400',
   crashed: 'bg-rose-400',
 }
@@ -249,7 +249,7 @@ export function AviatorControls({
 
   return (
     <>
-      <div className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+      <div className="mb-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-sm text-orange-700 dark:text-orange-300">
         <strong>Super Admin only.</strong> Crash mode, range, and next crash point queue are restricted to the highest privilege level.
       </div>
 
@@ -281,7 +281,7 @@ export function AviatorControls({
                 crashMode === mode
                   ? mode === 'auto'
                     ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
-                    : 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+                    : 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
                   : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
@@ -313,7 +313,7 @@ export function AviatorControls({
             </div>
           ) : (
             <div className="space-y-1">
-              <p className="font-medium text-amber-600 dark:text-amber-300">Manual Mode — Crash Range</p>
+              <p className="font-medium text-orange-600 dark:text-orange-300">Manual Mode — Crash Range</p>
               <p className="text-slate-500">Each round picks a random crash point between the min and max you set below.</p>
             </div>
           )}
@@ -327,7 +327,7 @@ export function AviatorControls({
       <section
         className={`rounded-xl border bg-white p-6 transition-opacity dark:bg-[#12161f] ${
           crashMode === 'manual'
-            ? 'border-amber-500/20 opacity-100 dark:border-amber-500/20'
+            ? 'border-orange-500/20 opacity-100 dark:border-orange-500/20'
             : 'pointer-events-none border-slate-200 opacity-40 dark:border-white/[0.04]'
         }`}
       >

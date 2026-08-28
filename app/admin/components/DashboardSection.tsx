@@ -23,7 +23,7 @@ import {
 import { StatCard, MiniBarChart, CopyButton } from './ui'
 
 const PHASE_STYLES: Record<string, string> = {
-  waiting: 'bg-amber-400/10 text-amber-700 ring-amber-400/30 dark:text-amber-300',
+  waiting: 'bg-orange-400/10 text-orange-700 ring-orange-400/30 dark:text-orange-300',
   flying: 'bg-sky-400/10 text-sky-700 ring-sky-400/30 dark:text-sky-300',
   crashed: 'bg-rose-400/10 text-rose-700 ring-rose-400/30 dark:text-rose-300',
 }

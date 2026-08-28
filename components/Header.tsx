@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 
-import Logo from '@/public/bit90logo.png'
+import Logo from '@/public/bit90logo.jpg'
 import Image from 'next/image'
 
 interface HeaderProps {

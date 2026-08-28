@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { API_URL } from '@/lib/api'
+import Image from 'next/image'
+import Logo from '@/public/bit90logo.jpg'
 
 function LoginForm() {
   const router = useRouter()
@@ -54,8 +56,8 @@ function LoginForm() {
     <div className="min-h-screen w-full bg-[#0A0F1E] text-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
-            ♦
+          <div className="mb-4">
+            <Image src={Logo} alt="Bit90 Logo" width={150} height={50} className="h-12 w-auto mx-auto object-contain" priority />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-gray-400 text-sm">Sign in to your account</p>
@@ -71,7 +73,7 @@ function LoginForm() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter your phone number"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-amber-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
               required
             />
           </div>
@@ -85,7 +87,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-amber-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
               required
             />
           </div>
@@ -97,7 +99,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 disabled:cursor-not-allowed transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
@@ -105,7 +107,7 @@ function LoginForm() {
 
         <p className="text-center text-gray-400 text-sm mt-6">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-amber-500 hover:text-amber-400 font-medium">
+          <Link href="/register" className="text-orange-500 hover:text-orange-400 font-medium">
             Sign Up
           </Link>
         </p>
@@ -118,7 +120,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen w-full bg-[#0A0F1E] flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
       </div>
     }>
       <LoginForm />
