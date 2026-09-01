@@ -13,10 +13,11 @@ const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 interface ToastProps {
   message: string;
   balance?: number;
+  isPolling?: boolean;
   onDone: () => void;
 }
 
-function SuccessToast({ message, balance, onDone }: ToastProps) {
+function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(100);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -28,7 +29,7 @@ function SuccessToast({ message, balance, onDone }: ToastProps) {
     // Trigger enter animation next tick
     const t = setTimeout(() => setVisible(true), 10);
 
-    // Countdown progress bar
+    // Countdown progress bar - only if not polling
     const tick = (now: number) => {
       if (startRef.current === null) startRef.current = now;
       const elapsed = now - startRef.current;
@@ -38,20 +39,27 @@ function SuccessToast({ message, balance, onDone }: ToastProps) {
         rafRef.current = requestAnimationFrame(tick);
       }
     };
-    rafRef.current = requestAnimationFrame(tick);
+    
+    if (!isPolling) {
+      rafRef.current = requestAnimationFrame(tick);
+    } else {
+      setProgress(100); // Keep progress bar full while polling
+    }
 
-    // After DURATION, trigger exit then call onDone
+    // After DURATION, trigger exit then call onDone (only if not polling)
     timerRef.current = setTimeout(() => {
-      setVisible(false);
-      setTimeout(onDone, 350);
-    }, DURATION);
+      if (!isPolling) {
+        setVisible(false);
+        setTimeout(onDone, 350);
+      }
+    }, isPolling ? 1000 : DURATION); // Reset timer while polling
 
     return () => {
       clearTimeout(t);
       if (timerRef.current) clearTimeout(timerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [onDone]);
+  }, [onDone, isPolling]);
 
   return (
     <div
@@ -103,13 +111,25 @@ function SuccessToast({ message, balance, onDone }: ToastProps) {
           />
         </div>
 
-        {/* Redirect label */}
+        {/* Progress label */}
         <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-[#7C8AA8]">
-          <svg className="w-3 h-3 animate-spin text-[#22D67A]" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          Redirecting to Aviator...
+          {isPolling ? (
+            <>
+              <svg className="w-3 h-3 animate-spin text-[#22D67A]" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Waiting for payment confirmation...
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3 animate-spin text-[#22D67A]" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Redirecting to Aviator...
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -129,6 +149,8 @@ export default function DepositPage() {
     message: "",
   });
   const [toast, setToast] = useState<{ message: string; balance?: number } | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
 
   // Page-level auth guard — runs as soon as the session has finished loading.
   // Unauthenticated visitors are immediately sent to login.
@@ -146,6 +168,74 @@ export default function DepositPage() {
       setPhone(cleanLocal);
     }
   }, [user]);
+
+  // Poll transaction status
+  useEffect(() => {
+    if (!transactionId || !isPolling) {
+      console.log("Polling skipped - transactionId:", transactionId, "isPolling:", isPolling);
+      return;
+    }
+
+    console.log("Starting transaction polling for:", transactionId);
+
+    const pollInterval = setInterval(async () => {
+      try {
+        console.log("Polling transaction status...");
+        const activeToken = token || getToken();
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (activeToken) {
+          headers["Authorization"] = `Bearer ${activeToken}`;
+        }
+
+        const res = await fetch(`${API_URL}users/transactions`, {
+          method: "GET",
+          headers,
+        });
+
+        console.log("Transactions API response status:", res.status);
+
+        if (res.ok) {
+          const transactions = await res.json();
+          console.log("Fetched transactions:", transactions.length);
+          const transaction = transactions.find((t: any) => t._id === transactionId || t.id === transactionId);
+
+          console.log("Found transaction:", transaction ? transaction.status : "not found");
+
+          if (transaction) {
+            if (transaction.status === 'completed') {
+              console.log("Transaction completed successfully!");
+              setIsPolling(false);
+              setToast({
+                message: "Deposit completed successfully!",
+                balance: transaction.balanceAfter,
+              });
+            } else if (transaction.status === 'failed') {
+              console.log("Transaction failed");
+              setIsPolling(false);
+              setStatus({
+                type: "error",
+                message: "Transaction failed. Please try again.",
+              });
+              setToast(null);
+            } else {
+              console.log("Transaction still pending:", transaction.status);
+            }
+          }
+        } else {
+          console.error("Failed to fetch transactions:", res.status);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => {
+      console.log("Clearing polling interval");
+      clearInterval(pollInterval);
+    };
+  }, [transactionId, isPolling, token]);
 
   // While auth is hydrating, show a full-screen spinner so the page
   // content never flashes to an unauthenticated visitor.
@@ -198,7 +288,13 @@ export default function DepositPage() {
         throw new Error(data.error || data.message || "Failed to send M-Pesa prompt");
       }
 
-      // Show toast — redirect happens when toast calls onDone
+      // Store transaction ID for polling
+      if (data.transaction?.id) {
+        setTransactionId(data.transaction.id);
+        setIsPolling(true);
+      }
+
+      // Show toast — redirect happens when transaction completes
       setToast({
         message: "M-Pesa prompt sent. Check your phone to enter your PIN and complete the transaction.",
       });
@@ -222,6 +318,7 @@ export default function DepositPage() {
         <SuccessToast
           message={toast.message}
           balance={toast.balance}
+          isPolling={isPolling}
           onDone={() => router.push("/aviator")}
         />
       )}
