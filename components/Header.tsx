@@ -52,7 +52,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-[#0B0E14]/95 backdrop-blur border-b border-[#242832]">
+    <header className="sticky top-0 z-20 bg-[#120D08]/95 backdrop-blur border-b border-[#3A2818]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2 sm:gap-4">
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
@@ -60,30 +60,30 @@ export default function Header({ query, setQuery }: HeaderProps) {
         </Link>
 
         {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#8890A3] shrink-0">
-          <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Sports</a>
-          <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Live</a>
+        <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#9C8A73] shrink-0">
+          <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">Sports</a>
+          <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">Live</a>
         </nav>
 
         {/* RIGHT ACTION BUTTONS */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           {user ? (
             <>
-              <span className="text-[#8890A3] text-[13px] hidden md:inline">
+              <span className="text-[#9C8A73] text-[13px] hidden md:inline">
                 {user.phone}
               </span>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="hidden md:inline-flex bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors text-[#ECEEF3] font-medium px-3 py-1.5 rounded-md text-[13px]"
+                className="hidden md:inline-flex bg-[#1B140C] border border-[#3A2818] hover:border-[#FF5A1F]/50 transition-colors text-[#F3E6D6] font-medium px-3 py-1.5 rounded-md text-[13px]"
               >
                 Logout
               </button>
 
               {/* BALANCE DISPLAY WHEN LOGGED IN */}
-              <div className="bg-[#12151C] border border-[#22304A] hover:border-[#22D67A]/40 transition-colors rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0 flex items-center gap-1">
-                <span className="text-[#7C8AA8] font-medium hidden sm:inline">Balance</span>
-                <span className="font-bold tabular-nums text-[#22D67A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <div className="bg-[#1B140C] border border-[#3A2818] hover:border-[#FF5A1F]/40 transition-colors rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0 flex items-center gap-1">
+                <span className="text-[#9C8A73] font-medium hidden sm:inline">Balance</span>
+                <span className="font-bold tabular-nums text-[#FF5A1F]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   KSh {formatBalance(user.balance)}
                 </span>
               </div>
@@ -94,9 +94,9 @@ export default function Header({ query, setQuery }: HeaderProps) {
                 id="account-profile-btn"
                 title="My Profile & Transactions"
                 aria-label="My Profile"
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F5A623] to-[#E0961C] hover:from-[#E0961C] hover:to-[#C8850F] transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#F5A623]/20 hover:shadow-[#F5A623]/35 hover:scale-105 active:scale-95"
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5A1F] to-[#E64F17] hover:from-[#E64F17] hover:to-[#D13D42] transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#FF5A1F]/20 hover:shadow-[#FF5A1F]/35 hover:scale-105 active:scale-95"
               >
-                <svg className="w-[18px] h-[18px] text-[#0B0E14]" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-[18px] h-[18px] text-[#120D08]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
                 </svg>
               </Link>
@@ -105,14 +105,14 @@ export default function Header({ query, setQuery }: HeaderProps) {
             /* LOGIN BUTTON WHEN NOT LOGGED IN */
             <Link
               href="/login"
-              className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] shrink-0"
+              className="bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#120D08] font-semibold px-3.5 py-1.5 rounded-md text-[13px] shrink-0"
             >
               Login
             </Link>
           )}
 
           <Link href="/deposit">
-            <button className="bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
+            <button className="bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#120D08] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
               Deposit
             </button>
           </Link>
@@ -123,7 +123,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors text-[#ECEEF3] flex items-center justify-center shrink-0 cursor-pointer"
+            className="w-8 h-8 rounded-md bg-[#1B140C] border border-[#3A2818] hover:border-[#FF5A1F]/50 transition-colors text-[#F3E6D6] flex items-center justify-center shrink-0 cursor-pointer"
           >
             {isFullscreen ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,10 +141,10 @@ export default function Header({ query, setQuery }: HeaderProps) {
             type="button"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle Menu"
-            className="w-8 h-8 rounded-md bg-[#12151C] border border-[#242832] hover:border-[#F5A623]/50 transition-colors flex items-center justify-center text-[#ECEEF3] shrink-0 md:hidden cursor-pointer"
+            className="w-8 h-8 rounded-md bg-[#1B140C] border border-[#3A2818] hover:border-[#FF5A1F]/50 transition-colors flex items-center justify-center text-[#F3E6D6] shrink-0 md:hidden cursor-pointer"
           >
             {isMobileMenuOpen ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24  ">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
@@ -158,15 +158,15 @@ export default function Header({ query, setQuery }: HeaderProps) {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-[#242832] bg-[#0B0E14] px-4 py-3 space-y-3">
-          <nav className="flex flex-col gap-2.5 text-sm font-medium text-[#8890A3]">
-            <a className="text-[#ECEEF3] font-semibold hover:text-[#F5A623] transition-colors cursor-pointer">Sports</a>
-            <a className="hover:text-[#ECEEF3] transition-colors cursor-pointer">Live</a>
+        <div className="md:hidden border-t border-[#3A2818] bg-[#120D08] px-4 py-3 space-y-3">
+          <nav className="flex flex-col gap-2.5 text-sm font-medium text-[#9C8A73]">
+            <a className="text-[#F3E6D6] font-semibold hover:text-[#FF5A1F] transition-colors cursor-pointer">Sports</a>
+            <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">Live</a>
           </nav>
           {user && (
-            <div className="flex items-center justify-between text-xs font-mono py-2 px-3 bg-[#12151C] rounded-lg border border-[#242832]">
-              <span className="text-[#8890A3]">Account: {user.phone}</span>
-              <span className="text-[#22D67A] font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <div className="flex items-center justify-between text-xs font-mono py-2 px-3 bg-[#1B140C] rounded-lg border border-[#3A2818]">
+              <span className="text-[#9C8A73]">Account: {user.phone}</span>
+              <span className="text-[#FF5A1F] font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 KSh {formatBalance(user.balance)}
               </span>
             </div>
@@ -176,26 +176,26 @@ export default function Header({ query, setQuery }: HeaderProps) {
               <Link
                 href="/withdraw"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex-1 text-center bg-[#12151C] border border-[#22D67A]/40 hover:border-[#22D67A] transition-colors text-[#22D67A] font-medium px-4 py-1.5 rounded-md text-[13px]"
+                className="flex-1 text-center bg-[#1B140C] border border-[#FF5A1F]/40 hover:border-[#FF5A1F] transition-colors text-[#FF5A1F] font-medium px-4 py-1.5 rounded-md text-[13px]"
               >
                 Withdraw
               </Link>
               <Link
                 href="/deposit"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex-1 text-center bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#0B0E14] font-medium px-4 py-1.5 rounded-md text-[13px]"
+                className="flex-1 text-center bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#120D08] font-medium px-4 py-1.5 rounded-md text-[13px]"
               >
                 Deposit
               </Link>
             </div>
           )}
-          <div className="pt-2.5 border-t border-[#242832]/60 flex items-center justify-between gap-3">
+          <div className="pt-2.5 border-t border-[#3A2818]/60 flex items-center justify-between gap-3">
             {user && (
               <>
                 <Link
                   href="/account"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-[13px] text-[#8890A3] hover:text-[#ECEEF3] transition-colors"
+                  className="flex items-center gap-2 text-[13px] text-[#9C8A73] hover:text-[#F3E6D6] transition-colors"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
@@ -208,7 +208,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
                     setIsMobileMenuOpen(false)
                     handleLogout()
                   }}
-                  className="bg-[#12151C] border border-[#FF4757]/40 hover:border-[#FF4757] transition-colors text-[#FF4757] font-medium px-4 py-1.5 rounded-md text-[13px]"
+                  className="bg-[#1B140C] border border-[#E5484D]/40 hover:border-[#E5484D] transition-colors text-[#E5484D] font-medium px-4 py-1.5 rounded-md text-[13px]"
                 >
                   Logout
                 </button>
@@ -221,12 +221,12 @@ export default function Header({ query, setQuery }: HeaderProps) {
       {/* Mobile Search Input */}
       <div className="sm:hidden px-3 pb-2.5">
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E7688] text-xs">⌕</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6E5C46] text-xs">⌕</span>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="w-full bg-[#12151C] border border-[#242832] rounded-md pl-7 pr-3 py-1.5 text-[13px] outline-none focus:border-[#F5A623]/50 placeholder:text-[#6E7688]"
+            className="w-full bg-[#1B140C] border border-[#3A2818] rounded-md pl-7 pr-3 py-1.5 text-[13px] outline-none focus:border-[#FF5A1F]/50 placeholder:text-[#6E5C46]"
           />
         </div>
       </div>

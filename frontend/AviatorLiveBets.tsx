@@ -47,9 +47,9 @@ export function formatMaskedPhone(phone?: string | null): string {
 }
 
 const AVATAR_COLORS = [
-  "from-[#FF4757] to-[#FF6B81]",
-  "from-[#22D67A] to-[#2ECC71]",
-  "from-[#FFB020] to-[#F39C12]",
+  "from-[#E5484D] to-[#FF6B81]",
+  "from-[#FF5A1F] to-[#E64F17]",
+  "from-[#E8A33D] to-[#D5922F]",
   "from-[#3B82F6] to-[#60A5FA]",
   "from-[#8B5CF6] to-[#A78BFA]",
   "from-[#EC4899] to-[#F472B6]",
@@ -252,7 +252,7 @@ export default function AviatorLiveBets({
             {
               id: ub.id,
               username: `${username} (Panel ${ub.panelIndex})`,
-              avatarColor: "from-[#22D67A] to-[#1CBE6B]",
+              avatarColor: "from-[#FF5A1F] to-[#E64F17]",
               amount: ub.amount,
               cashedOut,
               cashedOutAt,
@@ -279,20 +279,20 @@ export default function AviatorLiveBets({
     .reduce((sum, b) => sum + (b.payout || 0), 0);
 
   return (
-    <div className="bg-[#121A2E] rounded-2xl border border-[#22304A] flex flex-col h-full overflow-hidden shadow-xl">
+    <div className="bg-[#1B140C] rounded-2xl border border-[#3A2818] flex flex-col h-full overflow-hidden shadow-xl">
       {/* HEADER NAVIGATION TABS */}
-      <div className="flex items-center bg-[#0D1424] p-1 sm:p-1.5 border-b border-[#22304A] gap-1">
+      <div className="flex items-center bg-[#120D08] p-1 sm:p-1.5 border-b border-[#3A2818] gap-1">
         <button
           onClick={() => setActiveTab("all")}
           className={`flex-1 py-2 sm:py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === "all"
-            ? "bg-[#1C2842] text-white shadow-md border border-[#2B3C5E]"
-            : "text-[#7C8AA8] hover:text-white hover:bg-[#151E33]"
+            ? "bg-[#3A2818] text-[#F3E6D6] shadow-md border border-[#FF5A1F]/30"
+            : "text-[#9C8A73] hover:text-[#F3E6D6] hover:bg-[#FF5A1F]/10"
             }`}
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          <Users className="w-3.5 h-3.5 text-[#22D67A]" />
+          <Users className="w-3.5 h-3.5 text-[#FF5A1F]" />
           <span>All Bets</span>
-          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#22D67A]/20 text-[#22D67A] border border-[#22D67A]/30">
+          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#FF5A1F]/20 text-[#FF5A1F] border border-[#FF5A1F]/30">
             {totalBetsCount}
           </span>
         </button>
@@ -300,15 +300,15 @@ export default function AviatorLiveBets({
         <button
           onClick={() => setActiveTab("my")}
           className={`flex-1 py-2 sm:py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === "my"
-            ? "bg-[#1C2842] text-white shadow-md border border-[#2B3C5E]"
-            : "text-[#7C8AA8] hover:text-white hover:bg-[#151E33]"
+            ? "bg-[#3A2818] text-[#F3E6D6] shadow-md border border-[#FF5A1F]/30"
+            : "text-[#9C8A73] hover:text-[#F3E6D6] hover:bg-[#FF5A1F]/10"
             }`}
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          <Clock className="w-3.5 h-3.5 text-[#FFB020]" />
+          <Clock className="w-3.5 h-3.5 text-[#E8A33D]" />
           <span>My Bets</span>
           {uniqueUserBets.length > 0 && (
-            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#FFB020]/20 text-[#FFB020]">
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#E8A33D]/20 text-[#E8A33D]">
               {uniqueUserBets.length}
             </span>
           )}
@@ -317,12 +317,12 @@ export default function AviatorLiveBets({
         <button
           onClick={() => setActiveTab("top")}
           className={`flex-1 py-2 sm:py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === "top"
-            ? "bg-[#1C2842] text-white shadow-md border border-[#2B3C5E]"
-            : "text-[#7C8AA8] hover:text-white hover:bg-[#151E33]"
+            ? "bg-[#3A2818] text-[#F3E6D6] shadow-md border border-[#FF5A1F]/30"
+            : "text-[#9C8A73] hover:text-[#F3E6D6] hover:bg-[#FF5A1F]/10"
             }`}
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          <Flame className="w-3.5 h-3.5 text-[#FF4757]" />
+          <Flame className="w-3.5 h-3.5 text-[#E5484D]" />
           <span>Top</span>
         </button>
       </div>
@@ -331,19 +331,19 @@ export default function AviatorLiveBets({
       {activeTab === "all" && (
         <div className="flex-1 flex flex-col min-h-[300px] max-h-[520px]">
           {/* STATS OVERVIEW BAR */}
-          <div className="px-3.5 py-2 bg-[#0A0F1E]/80 border-b border-[#22304A]/60 flex items-center justify-between text-[11px] font-semibold text-[#7C8AA8]">
+          <div className="px-3.5 py-2 bg-[#120D08]/80 border-b border-[#3A2818]/60 flex items-center justify-between text-[11px] font-semibold text-[#9C8A73]">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#22D67A] animate-ping" />
-              <span className="text-white font-bold">{totalCashedOutCount}/{totalBetsCount}</span> Cashed Out
+              <span className="w-2 h-2 rounded-full bg-[#FF5A1F] animate-ping" />
+              <span className="text-[#F3E6D6] font-bold">{totalCashedOutCount}/{totalBetsCount}</span> Cashed Out
             </div>
-            <div className="flex items-center gap-1 text-[#22D67A]">
+            <div className="flex items-center gap-1 text-[#FF5A1F]">
               <span>Total Won:</span>
-              <span className="font-bold text-white tabular-nums">KSh {totalPayoutSum.toLocaleString()}</span>
+              <span className="font-bold text-[#F3E6D6] tabular-nums">KSh {totalPayoutSum.toLocaleString()}</span>
             </div>
           </div>
 
           {/* TABLE HEADERS */}
-          <div className="grid grid-cols-12 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] border-b border-[#22304A]/50 bg-[#0E1526]">
+          <div className="grid grid-cols-12 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#6E5C46] border-b border-[#3A2818]/50 bg-[#1B140C]">
             <div className="col-span-5">User Phone</div>
             <div className="col-span-3 text-right">Bet (KSh)</div>
             <div className="col-span-2 text-center">Mult</div>
@@ -351,12 +351,12 @@ export default function AviatorLiveBets({
           </div>
 
           {/* SCROLLABLE BETS LIST */}
-          <div className="flex-1 overflow-y-auto divide-y divide-[#1A253D] scrollbar-thin scrollbar-thumb-[#22304A]">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#3A2818] scrollbar-thin scrollbar-thumb-[#3A2818]">
             {liveBets.length === 0 ? (
-              <div className="p-8 text-center text-[#64748B] flex flex-col items-center gap-2">
-                <Users className="w-8 h-8 text-[#22304A]" />
+              <div className="p-8 text-center text-[#6E5C46] flex flex-col items-center gap-2">
+                <Users className="w-8 h-8 text-[#3A2818]" />
                 <p className="text-xs">No bets placed in this round yet.</p>
-                <p className="text-[11px] text-[#475569]">Bets placed by live players will appear here!</p>
+                <p className="text-[11px] text-[#6E5C46]">Bets placed by live players will appear here!</p>
               </div>
             ) : (
               liveBets.map((bet) => {
@@ -367,23 +367,23 @@ export default function AviatorLiveBets({
                   <div
                     key={bet.id}
                     className={`grid grid-cols-12 px-3 sm:px-4 py-2.5 items-center text-xs transition-all duration-300 ${bet.isUser
-                      ? "bg-[#22D67A]/10 border-l-4 border-l-[#22D67A]"
+                      ? "bg-[#FF5A1F]/10 border-l-4 border-l-[#FF5A1F]"
                       : bet.justCashedOut
-                        ? "bg-[#22D67A]/20 shadow-[0_0_15px_rgba(34,214,122,0.3)]"
-                        : "hover:bg-[#162035]"
+                        ? "bg-[#FF5A1F]/20 shadow-[0_0_15px_rgba(255,90,31,0.3)]"
+                        : "hover:bg-[#FF5A1F]/5"
                       }`}
                   >
                     {/* USER COLUMN */}
                     <div className="col-span-5 flex items-center gap-2 overflow-hidden pr-1">
                       <div
-                        className={`w-6 h-6 rounded-full bg-gradient-to-tr ${bet.avatarColor} flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm`}
+                        className={`w-6 h-6 rounded-full bg-gradient-to-tr ${bet.avatarColor} flex items-center justify-center text-[10px] font-bold text-[#120D08] shrink-0 shadow-sm`}
                       >
                         {bet.username.charAt(0)}
                       </div>
-                      <div className="truncate font-semibold text-white flex items-center gap-1 text-[11px] sm:text-xs">
+                      <div className="truncate font-semibold text-[#F3E6D6] flex items-center gap-1 text-[11px] sm:text-xs">
                         <span>{bet.username}</span>
                         {bet.isUser && (
-                          <span className="text-[9px] px-1 py-0.2 bg-[#22D67A] text-[#0A0F1E] font-extrabold rounded">
+                          <span className="text-[9px] px-1 py-0.2 bg-[#FF5A1F] text-[#120D08] font-extrabold rounded">
                             YOU
                           </span>
                         )}
@@ -391,7 +391,7 @@ export default function AviatorLiveBets({
                     </div>
 
                     {/* BET AMOUNT */}
-                    <div className="col-span-3 text-right font-bold text-[#E2E8F0] tabular-nums text-[11px] sm:text-xs">
+                    <div className="col-span-3 text-right font-bold text-[#F3E6D6] tabular-nums text-[11px] sm:text-xs">
                       {bet.amount.toLocaleString()}
                     </div>
 
@@ -402,28 +402,28 @@ export default function AviatorLiveBets({
                           className={`px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-extrabold tabular-nums border ${isHighMult
                             ? "bg-[#A855F7]/20 text-[#C084FC] border-[#A855F7]/50 shadow-[0_0_8px_rgba(168,85,247,0.4)]"
                             : isMidMult
-                              ? "bg-[#22D67A]/20 text-[#22D67A] border-[#22D67A]/50 shadow-[0_0_8px_rgba(34,214,122,0.3)]"
-                              : "bg-[#FFB020]/20 text-[#FFB020] border-[#FFB020]/40"
+                              ? "bg-[#FF5A1F]/20 text-[#FF5A1F] border-[#FF5A1F]/50 shadow-[0_0_8px_rgba(255,90,31,0.3)]"
+                              : "bg-[#E8A33D]/20 text-[#E8A33D] border-[#E8A33D]/40"
                             }`}
                           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                         >
                           {bet.cashedOutAt.toFixed(2)}x
                         </span>
                       ) : bet.crashed ? (
-                        <span className="text-[10px] text-[#EF4444] font-semibold">Crashed</span>
+                        <span className="text-[10px] text-[#E5484D] font-semibold">Crashed</span>
                       ) : (
-                        <span className="text-[10px] text-[#64748B] font-mono">---</span>
+                        <span className="text-[10px] text-[#6E5C46] font-mono">---</span>
                       )}
                     </div>
 
                     {/* CASHOUT AMOUNT */}
                     <div className="col-span-2 text-right font-extrabold tabular-nums text-[11px] sm:text-xs">
                       {bet.cashedOut && bet.payout ? (
-                        <span className="text-[#22D67A]">
+                        <span className="text-[#FF5A1F]">
                           +{(bet.payout).toLocaleString()}
                         </span>
                       ) : (
-                        <span className="text-[#475569]">-</span>
+                        <span className="text-[#6E5C46]">-</span>
                       )}
                     </div>
                   </div>
@@ -437,55 +437,55 @@ export default function AviatorLiveBets({
       {/* MY BETS TAB CONTENT */}
       {activeTab === "my" && (
         <div className="flex-1 flex flex-col min-h-[300px] max-h-[520px]">
-          <div className="grid grid-cols-12 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] border-b border-[#22304A]/50 bg-[#0E1526]">
+          <div className="grid grid-cols-12 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#6E5C46] border-b border-[#3A2818]/50 bg-[#1B140C]">
             <div className="col-span-4">Round / Time</div>
             <div className="col-span-3 text-right">Bet</div>
             <div className="col-span-2 text-center">Mult</div>
             <div className="col-span-3 text-right">Payout</div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#1A253D] scrollbar-thin scrollbar-thumb-[#22304A]">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#3A2818] scrollbar-thin scrollbar-thumb-[#3A2818]">
             {uniqueUserBets.length === 0 ? (
-              <div className="p-8 text-center text-[#64748B] flex flex-col items-center gap-2">
-                <Clock className="w-8 h-8 text-[#22304A]" />
+              <div className="p-8 text-center text-[#6E5C46] flex flex-col items-center gap-2">
+                <Clock className="w-8 h-8 text-[#3A2818]" />
                 <p className="text-xs">No bets placed in database yet.</p>
-                <p className="text-[11px] text-[#475569]">Place a bet on the control panel to see your live DB history!</p>
+                <p className="text-[11px] text-[#6E5C46]">Place a bet on the control panel to see your live DB history!</p>
               </div>
             ) : (
               uniqueUserBets.map((b) => {
                 const isWin = b.status === "cashed_out" && b.payout;
                 return (
-                  <div key={b.id} className="grid grid-cols-12 px-3 sm:px-4 py-3 items-center text-xs hover:bg-[#162035]">
+                  <div key={b.id} className="grid grid-cols-12 px-3 sm:px-4 py-3 items-center text-xs hover:bg-[#FF5A1F]/5">
                     <div className="col-span-4">
-                      <p className="font-bold text-white text-[11px]">Panel {b.panelIndex}</p>
-                      <p className="text-[10px] text-[#64748B]">{b.createdAt}</p>
+                      <p className="font-bold text-[#F3E6D6] text-[11px]">Panel {b.panelIndex}</p>
+                      <p className="text-[10px] text-[#6E5C46]">{b.createdAt}</p>
                     </div>
 
-                    <div className="col-span-3 text-right font-bold text-white tabular-nums">
+                    <div className="col-span-3 text-right font-bold text-[#F3E6D6] tabular-nums">
                       KSh {b.amount.toLocaleString()}
                     </div>
 
                     <div className="col-span-2 flex justify-center">
                       {b.status === "cashed_out" && b.cashedOutAt ? (
-                        <span className="px-1.5 py-0.5 rounded bg-[#22D67A]/20 text-[#22D67A] font-extrabold text-[11px] border border-[#22D67A]/40">
+                        <span className="px-1.5 py-0.5 rounded bg-[#FF5A1F]/20 text-[#FF5A1F] font-extrabold text-[11px] border border-[#FF5A1F]/40">
                           {b.cashedOutAt.toFixed(2)}x
                         </span>
                       ) : b.status === "crashed" ? (
-                        <span className="px-1.5 py-0.5 rounded bg-[#FF4757]/20 text-[#FF4757] font-bold text-[10px]">
+                        <span className="px-1.5 py-0.5 rounded bg-[#E5484D]/20 text-[#E5484D] font-bold text-[10px]">
                           Flew Away
                         </span>
                       ) : (
-                        <span className="text-[#FFB020] text-[10px] font-bold animate-pulse">In Flight</span>
+                        <span className="text-[#E8A33D] text-[10px] font-bold animate-pulse">In Flight</span>
                       )}
                     </div>
 
                     <div className="col-span-3 text-right font-extrabold tabular-nums">
                       {isWin ? (
-                        <span className="text-[#22D67A]">+KSh {(b.payout!).toLocaleString()}</span>
+                        <span className="text-[#FF5A1F]">+KSh {(b.payout!).toLocaleString()}</span>
                       ) : b.status === "crashed" ? (
-                        <span className="text-[#FF4757]">-KSh {b.amount.toLocaleString()}</span>
+                        <span className="text-[#E5484D]">-KSh {b.amount.toLocaleString()}</span>
                       ) : (
-                        <span className="text-[#64748B]">-</span>
+                        <span className="text-[#6E5C46]">-</span>
                       )}
                     </div>
                   </div>
@@ -500,63 +500,63 @@ export default function AviatorLiveBets({
       {activeTab === "top" && (
         <div className="flex-1 flex flex-col min-h-[300px] max-h-[520px]">
           {/* SUB FILTER HEADER */}
-          <div className="p-2 bg-[#0A0F1E] border-b border-[#22304A]/60 flex justify-between items-center gap-2">
-            <div className="flex bg-[#141D30] p-1 rounded-lg border border-[#22304A]">
+          <div className="p-2 bg-[#120D08] border-b border-[#3A2818]/60 flex justify-between items-center gap-2">
+            <div className="flex bg-[#3A2818] p-1 rounded-lg border border-[#3A2818]">
               <button
                 onClick={() => setTopSubFilter("wins")}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${topSubFilter === "wins" ? "bg-[#22D67A] text-[#0A0F1E]" : "text-[#7C8AA8] hover:text-white"
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${topSubFilter === "wins" ? "bg-[#FF5A1F] text-[#120D08]" : "text-[#9C8A73] hover:text-[#F3E6D6]"
                   }`}
               >
                 Huge Wins
               </button>
               <button
                 onClick={() => setTopSubFilter("mults")}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${topSubFilter === "mults" ? "bg-[#22D67A] text-[#0A0F1E]" : "text-[#7C8AA8] hover:text-white"
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${topSubFilter === "mults" ? "bg-[#FF5A1F] text-[#120D08]" : "text-[#9C8A73] hover:text-[#F3E6D6]"
                   }`}
               >
                 Multiplier
               </button>
             </div>
-            <span className="text-[10px] text-[#64748B] font-semibold pr-2">DB Leaderboard</span>
+            <span className="text-[10px] text-[#6E5C46] font-semibold pr-2">DB Leaderboard</span>
           </div>
 
-          <div className="grid grid-cols-12 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] border-b border-[#22304A]/50 bg-[#0E1526]">
+          <div className="grid grid-cols-12 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#6E5C46] border-b border-[#3A2818]/50 bg-[#1B140C]">
             <div className="col-span-5">Player Phone</div>
             <div className="col-span-3 text-right">Bet</div>
             <div className="col-span-2 text-center">Mult</div>
             <div className="col-span-2 text-right">Win</div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#1A253D] scrollbar-thin scrollbar-thumb-[#22304A]">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#3A2818] scrollbar-thin scrollbar-thumb-[#3A2818]">
             {topWins.length === 0 ? (
-              <div className="p-8 text-center text-[#64748B] flex flex-col items-center gap-2">
-                <Flame className="w-8 h-8 text-[#22304A]" />
+              <div className="p-8 text-center text-[#6E5C46] flex flex-col items-center gap-2">
+                <Flame className="w-8 h-8 text-[#3A2818]" />
                 <p className="text-xs">No top bets recorded in database yet.</p>
-                <p className="text-[11px] text-[#475569]">High multiplier cashouts recorded in database will appear here!</p>
+                <p className="text-[11px] text-[#6E5C46]">High multiplier cashouts recorded in database will appear here!</p>
               </div>
             ) : (
               topWins.map((row: any) => (
-                <div key={row.rank || row.user} className="grid grid-cols-12 px-3 sm:px-4 py-2.5 items-center text-xs hover:bg-[#162035]">
+                <div key={row.rank || row.user} className="grid grid-cols-12 px-3 sm:px-4 py-2.5 items-center text-xs hover:bg-[#FF5A1F]/5">
                   <div className="col-span-5 flex items-center gap-2">
                     <span
                       className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${row.rank === 1
-                        ? "bg-[#FFB020] text-[#0A0F1E] shadow-md shadow-[#FFB020]/30"
+                        ? "bg-[#E8A33D] text-[#120D08] shadow-md shadow-[#E8A33D]/30"
                         : row.rank === 2
-                          ? "bg-[#94A3B8] text-[#0A0F1E]"
+                          ? "bg-[#94A3B8] text-[#120D08]"
                           : row.rank === 3
-                            ? "bg-[#B45309] text-white"
-                            : "bg-[#1E293B] text-[#64748B]"
+                            ? "bg-[#B45309] text-[#F3E6D6]"
+                            : "bg-[#3A2818] text-[#6E5C46]"
                         }`}
                     >
                       {row.rank}
                     </span>
                     <div>
-                      <p className="font-bold text-white text-[11px]">{row.user}</p>
-                      <p className="text-[9px] text-[#64748B]">{row.date}</p>
+                      <p className="font-bold text-[#F3E6D6] text-[11px]">{row.user}</p>
+                      <p className="text-[9px] text-[#6E5C46]">{row.date}</p>
                     </div>
                   </div>
 
-                  <div className="col-span-3 text-right font-bold text-[#CBD5E1] tabular-nums">
+                  <div className="col-span-3 text-right font-bold text-[#F3E6D6] tabular-nums">
                     {row.bet.toLocaleString()}
                   </div>
 
@@ -566,7 +566,7 @@ export default function AviatorLiveBets({
                     </span>
                   </div>
 
-                  <div className="col-span-2 text-right font-extrabold text-[#22D67A] tabular-nums text-[11px]">
+                  <div className="col-span-2 text-right font-extrabold text-[#FF5A1F] tabular-nums text-[11px]">
                     +{(row.payout).toLocaleString()}
                   </div>
                 </div>

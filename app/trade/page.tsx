@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import Header from "@/components/Header";
 import ChartToolbar from "@/components/trade/ChartToolbar";
 import SimulationPanel from "@/components/trade/SimulationPanel";
 import TradingChart from "@/components/trade/TradingChart";
@@ -10,6 +11,7 @@ import { Menu, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { TradeDirection, ActiveTrade } from "@/components/trade/types";
 
 export default function Trade() {
+    const [query, setQuery] = useState("");
     const [timeframe, setTimeframe] = useState("1m");
     const [isSimulating, setIsSimulating] = useState(true);
     const [volatility, setVolatility] = useState<Volatility>('Medium');
@@ -166,20 +168,8 @@ export default function Trade() {
     }, [currentCandle]);
 
     return (
-        <div className="h-screen w-full bg-[#0B0E14] text-[#ECEEF3] flex flex-col overflow-hidden font-sans">
-            {/* Mobile Header */}
-            <div className="lg:hidden flex items-center justify-between p-3 bg-[#11141B] border-b border-[#2A2E39]">
-                <div className="font-bold text-lg text-white">TradeSim</div>
-                <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                        <p className="text-[10px] text-gray-400">Balance</p>
-                        <p className="text-sm font-bold text-white">${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    </div>
-                    <button onClick={() => setIsMobilePanelOpen(!isMobilePanelOpen)}>
-                        {isMobilePanelOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                    </button>
-                </div>
-            </div>
+        <div className="min-h-screen w-full bg-[#120D08] text-[#F3E6D6] flex flex-col font-sans">
+            <Header query={query} setQuery={setQuery} />
 
             <div className="hidden lg:block">
                 <ChartToolbar timeframe={timeframe} setTimeframe={setTimeframe} />
@@ -194,7 +184,7 @@ export default function Trade() {
                     
                     {/* Mobile Active Trades Bar */}
                     {activeTrades.length > 0 && (
-                        <div className="lg:hidden bg-[#11141B] border-b border-[#2A2E39] p-2">
+                        <div className="lg:hidden bg-[#1B140C] border-b border-[#3A2818] p-2">
                             <div className="grid grid-cols-1 gap-2">
                                 {activeTrades.map((trade) => {
                                     const elapsed = Date.now() - trade.startTime;
@@ -205,35 +195,35 @@ export default function Trade() {
                                             key={trade.id}
                                             className={`px-3 py-2 rounded-lg text-xs border ${
                                                 trade.result === 'win'
-                                                    ? 'bg-green-900/30 border-green-500'
+                                                    ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]'
                                                     : trade.result === 'lose'
-                                                    ? 'bg-red-900/30 border-red-500'
-                                                    : 'bg-[#1a1e28] border-[#2A2E39]'
+                                                    ? 'bg-[#E5484D]/20 border-[#E5484D]'
+                                                    : 'bg-[#120D08] border-[#3A2818]'
                                             }`}
                                         >
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className={`font-semibold ${
-                                                    trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
+                                                    trade.direction === 'buy' ? 'text-[#FF5A1F]' : 'text-[#E5484D]'
                                                 }`}>
                                                     {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
                                                 </span>
-                                                <span className="text-gray-400 font-medium">
+                                                <span className="text-[#9C8A73] font-medium">
                                                     {Math.ceil(remaining / 1000)}s
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-[#2A2E39] rounded-full h-2">
+                                            <div className="w-full bg-[#3A2818] rounded-full h-2">
                                                 <div
                                                     className={`h-2 rounded-full transition-all ${
                                                         trade.result === 'win'
-                                                            ? 'bg-green-500'
+                                                            ? 'bg-[#FF5A1F]'
                                                             : trade.result === 'lose'
-                                                            ? 'bg-red-500'
-                                                            : 'bg-blue-500'
+                                                            ? 'bg-[#E5484D]'
+                                                            : 'bg-[#E8A33D]'
                                                     }`}
                                                     style={{ width: `${progress}%` }}
                                                 />
                                             </div>
-                                            <div className="text-[10px] text-gray-500 mt-1">
+                                            <div className="text-[10px] text-[#6E5C46] mt-1">
                                                 Entry: ${trade.entryPrice.toFixed(2)}
                                             </div>
                                         </div>
@@ -243,7 +233,7 @@ export default function Trade() {
                         </div>
                     )}
                     
-                    <div className="flex-1 relative bg-[#0B0E14]">
+                    <div className="flex-1 relative bg-[#120D08]">
                         {historicalData.length > 0 && (
                             <TradingChart 
                                 key={timeframe} 
@@ -275,27 +265,27 @@ export default function Trade() {
                 </div>
 
                 {/* Mobile Bottom Bar */}
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#11141B] border-t border-[#2A2E39] z-40">
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1B140C] border-t border-[#3A2818] z-40">
                     {/* Trade Controls */}
                     <div className="p-3 space-y-2">
                         <div className="flex space-x-2">
                             <div className="flex-1">
-                                <label className="text-gray-400 text-[10px] mb-1 block">Amount</label>
+                                <label className="text-[#9C8A73] text-[10px] mb-1 block">Amount</label>
                                 <input
                                     type="number"
                                     value={tradeAmount}
                                     onChange={(e) => setTradeAmount(Math.max(1, Number(e.target.value)))}
-                                    className="w-full px-2 py-1.5 bg-[#1a1e28] border border-[#2A2E39] rounded text-white text-xs focus:outline-none focus:border-blue-500"
+                                    className="w-full px-2 py-1.5 bg-[#120D08] border border-[#3A2818] rounded text-[#F3E6D6] text-xs focus:outline-none focus:border-[#FF5A1F]"
                                     min="1"
                                 />
                             </div>
                             <div className="flex-1">
-                                <label className="text-gray-400 text-[10px] mb-1 block">Time (s)</label>
+                                <label className="text-[#9C8A73] text-[10px] mb-1 block">Time (s)</label>
                                 <input
                                     type="number"
                                     value={tradeDuration}
                                     onChange={(e) => setTradeDuration(Math.max(1, Number(e.target.value)))}
-                                    className="w-full px-2 py-1.5 bg-[#1a1e28] border border-[#2A2E39] rounded text-white text-xs focus:outline-none focus:border-blue-500"
+                                    className="w-full px-2 py-1.5 bg-[#120D08] border border-[#3A2818] rounded text-[#F3E6D6] text-xs focus:outline-none focus:border-[#FF5A1F]"
                                     min="1"
                                 />
                             </div>
@@ -303,14 +293,14 @@ export default function Trade() {
                     </div>
                     
                     {/* Buy/Sell Buttons */}
-                    <div className="flex border-t border-[#2A2E39]">
+                    <div className="flex border-t border-[#3A2818]">
                         <button
                             onClick={() => placeTrade('buy')}
                             disabled={tradeAmount > balance}
                             className={`flex-1 py-3 font-bold text-sm transition-all flex items-center justify-center space-x-1 ${
                                 tradeAmount > balance
-                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                    : 'bg-green-600 text-white hover:bg-green-700'
+                                    ? 'bg-[#3A2818] text-[#6E5C46] cursor-not-allowed'
+                                    : 'bg-[#FF5A1F] text-[#120D08] hover:bg-[#E64F17]'
                             }`}
                         >
                             <TrendingUp className="w-4 h-4" />
@@ -322,8 +312,8 @@ export default function Trade() {
                             disabled={tradeAmount > balance}
                             className={`flex-1 py-3 font-bold text-sm transition-all flex items-center justify-center space-x-1 ${
                                 tradeAmount > balance
-                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                    : 'bg-red-600 text-white hover:bg-red-700'
+                                    ? 'bg-[#3A2818] text-[#6E5C46] cursor-not-allowed'
+                                    : 'bg-[#E5484D] text-[#120D08] hover:bg-[#D13D42]'
                             }`}
                         >
                             <TrendingDown className="w-4 h-4" />
@@ -336,8 +326,8 @@ export default function Trade() {
                 {/* Mobile Drawer for extended controls */}
                 {isMobilePanelOpen && (
                     <div className="absolute inset-0 z-50 bg-black/50 lg:hidden flex justify-end">
-                        <div className="w-80 h-full bg-[#11141B] shadow-xl animate-in slide-in-from-right">
-                            <div className="p-4 border-b border-[#2A2E39] flex justify-between items-center">
+                        <div className="w-80 h-full bg-[#1B140C] shadow-xl animate-in slide-in-from-right">
+                            <div className="p-4 border-b border-[#3A2818] flex justify-between items-center">
                                 <span className="font-bold">Trade Settings</span>
                                 <button onClick={() => setIsMobilePanelOpen(false)}>
                                     <X className="w-6 h-6" />
@@ -346,13 +336,13 @@ export default function Trade() {
                             <div className="h-[calc(100%-65px)] overflow-y-auto">
                                 <div className="p-4 space-y-4">
                                     <div>
-                                        <label className="text-gray-400 text-xs font-medium mb-2 block">Quick Amounts</label>
+                                        <label className="text-[#9C8A73] text-xs font-medium mb-2 block">Quick Amounts</label>
                                         <div className="grid grid-cols-5 gap-1">
                                             {[10, 50, 100, 500, 1000].map((amount) => (
                                                 <button
                                                     key={amount}
                                                     onClick={() => setTradeAmount(amount)}
-                                                    className={`py-2 rounded text-xs font-medium transition-colors ${tradeAmount === amount ? 'bg-blue-600 text-white' : 'bg-[#1a1e28] text-gray-400 hover:text-white'}`}
+                                                    className={`py-2 rounded text-xs font-medium transition-colors ${tradeAmount === amount ? 'bg-[#FF5A1F] text-[#120D08]' : 'bg-[#120D08] text-[#9C8A73] hover:text-[#F3E6D6]'}`}
                                                 >
                                                     {amount}
                                                 </button>
@@ -360,13 +350,13 @@ export default function Trade() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-gray-400 text-xs font-medium mb-2 block">Quick Times</label>
+                                        <label className="text-[#9C8A73] text-xs font-medium mb-2 block">Quick Times</label>
                                         <div className="grid grid-cols-5 gap-1">
                                             {[5, 10, 30, 60, 120].map((duration) => (
                                                 <button
                                                     key={duration}
                                                     onClick={() => setTradeDuration(duration)}
-                                                    className={`py-2 rounded text-xs font-medium transition-colors ${tradeDuration === duration ? 'bg-blue-600 text-white' : 'bg-[#1a1e28] text-gray-400 hover:text-white'}`}
+                                                    className={`py-2 rounded text-xs font-medium transition-colors ${tradeDuration === duration ? 'bg-[#FF5A1F] text-[#120D08]' : 'bg-[#120D08] text-[#9C8A73] hover:text-[#F3E6D6]'}`}
                                                 >
                                                     {duration}s
                                                 </button>
@@ -374,7 +364,7 @@ export default function Trade() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-gray-400 text-xs font-medium mb-2 block">All Active Trades</label>
+                                        <label className="text-[#9C8A73] text-xs font-medium mb-2 block">All Active Trades</label>
                                         <div className="space-y-2 max-h-60 overflow-y-auto">
                                             {activeTrades.map((trade) => {
                                                 const elapsed = Date.now() - trade.startTime;
@@ -386,43 +376,43 @@ export default function Trade() {
                                                         key={trade.id}
                                                         className={`p-2 rounded border ${
                                                             trade.result === 'win'
-                                                                ? 'bg-green-900/30 border-green-500'
+                                                                ? 'bg-[#FF5A1F]/20 border-[#FF5A1F]'
                                                                 : trade.result === 'lose'
-                                                                ? 'bg-red-900/30 border-red-500'
-                                                                : 'bg-[#1a1e28] border-[#2A2E39]'
+                                                                ? 'bg-[#E5484D]/20 border-[#E5484D]'
+                                                                : 'bg-[#120D08] border-[#3A2818]'
                                                         }`}
                                                     >
                                                         <div className="flex justify-between items-center mb-1">
                                                             <span className={`text-xs font-semibold ${
-                                                                trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
+                                                                trade.direction === 'buy' ? 'text-[#FF5A1F]' : 'text-[#E5484D]'
                                                             }`}>
                                                                 {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
                                                             </span>
                                                             {trade.result ? (
                                                                 <span className={`text-xs font-bold ${
-                                                                    trade.result === 'win' ? 'text-green-400' : 'text-red-400'
+                                                                    trade.result === 'win' ? 'text-[#FF5A1F]' : 'text-[#E5484D]'
                                                                 }`}>
                                                                     {trade.result.toUpperCase()}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-xs text-gray-400">
+                                                                <span className="text-xs text-[#9C8A73]">
                                                                     {Math.ceil(remaining / 1000)}s
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="w-full bg-[#2A2E39] rounded-full h-1.5">
+                                                        <div className="w-full bg-[#3A2818] rounded-full h-1.5">
                                                             <div
                                                                 className={`h-1.5 rounded-full transition-all ${
                                                                     trade.result === 'win'
-                                                                        ? 'bg-green-500'
+                                                                        ? 'bg-[#FF5A1F]'
                                                                         : trade.result === 'lose'
-                                                                        ? 'bg-red-500'
-                                                                        : 'bg-blue-500'
+                                                                        ? 'bg-[#E5484D]'
+                                                                        : 'bg-[#E8A33D]'
                                                                 }`}
                                                                 style={{ width: `${progress}%` }}
                                                             />
                                                         </div>
-                                                        <div className="text-[10px] text-gray-500 mt-1">
+                                                        <div className="text-[10px] text-[#6E5C46] mt-1">
                                                             Entry: ${trade.entryPrice.toFixed(2)}
                                                         </div>
                                                     </div>

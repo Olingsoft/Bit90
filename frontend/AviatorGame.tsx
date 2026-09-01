@@ -24,8 +24,8 @@ function useFonts() {
 
 function colorForMultiplier(m: number) {
   if (m >= 10) return { bg: "bg-[#A855F7]", text: "text-[#C084FC]", stroke: "#A855F7" };
-  if (m >= 2) return { bg: "bg-[#22D67A]", text: "text-[#22D67A]", stroke: "#22D67A" };
-  return { bg: "bg-[#FFB020]", text: "text-[#FFB020]", stroke: "#FFB020" };
+  if (m >= 2) return { bg: "bg-[#FF5A1F]", text: "text-[#FF5A1F]", stroke: "#FF5A1F" };
+  return { bg: "bg-[#E8A33D]", text: "text-[#E8A33D]", stroke: "#E8A33D" };
 }
 
 function AviatorPlaneIcon({
@@ -510,7 +510,7 @@ export default function AviatorGame() {
   const mColor = colorForMultiplier(multiplier);
 
   return (
-    <div className="min-h-screen w-full bg-[#0A0F1E] text-[#E7ECF6]" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen w-full bg-[#120D08] text-[#F3E6D6]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{`
         @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
         .shake-anim { animation: shake 0.35s ease-in-out; }
@@ -536,9 +536,9 @@ export default function AviatorGame() {
 
       <main className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 space-y-3">
         {/* TOP MULTIPLIER HISTORY BAR */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1.5 sm:py-2 px-3 bg-[#121A2E] rounded-xl border border-[#22304A] scrollbar-none text-xs shadow-md">
-          <span className="text-[#7C8AA8] font-bold text-[10px] sm:text-xs uppercase tracking-wider pr-1 shrink-0 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22D67A]" />
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1.5 sm:py-2 px-3 bg-[#1B140C] rounded-xl border border-[#3A2818] scrollbar-none text-xs shadow-md">
+          <span className="text-[#9C8A73] font-bold text-[10px] sm:text-xs uppercase tracking-wider pr-1 shrink-0 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F]" />
             History
           </span>
           {history.map((h, i) => {
@@ -546,7 +546,7 @@ export default function AviatorGame() {
             return (
               <span
                 key={i}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-extrabold whitespace-nowrap bg-[#0D1424] border border-[#22304A] shadow-sm ${color.text}`}
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-extrabold whitespace-nowrap bg-[#120D08] border border-[#3A2818] shadow-sm ${color.text}`}
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 {h.toFixed(2)}x
@@ -573,12 +573,12 @@ export default function AviatorGame() {
           {/* RIGHT CENTER: GAME STAGE & DUAL CONTROL PANELS */}
           <div className="lg:col-span-8 xl:col-span-8 order-1 lg:order-2 space-y-3">
             {/* STAGE CONTAINER */}
-            <div className="relative bg-[#070B15] border border-[#22304A] rounded-2xl overflow-hidden shadow-2xl min-h-[320px] sm:min-h-[400px] lg:min-h-[440px] flex flex-col justify-between p-3 sm:p-5">
+            <div className="relative bg-[#120D08] border border-[#3A2818] rounded-2xl overflow-hidden shadow-2xl min-h-[320px] sm:min-h-[400px] lg:min-h-[440px] flex flex-col justify-between p-3 sm:p-5">
               <div className="flex justify-between items-center z-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF4757] animate-pulse" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E5484D] animate-pulse" />
                   <span
-                    className="text-xs sm:text-sm font-bold tracking-wider text-white uppercase"
+                    className="text-xs sm:text-sm font-bold tracking-wider text-[#F3E6D6] uppercase"
                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                   >
                     Aviator Live
@@ -595,11 +595,11 @@ export default function AviatorGame() {
               <div className="relative z-10 flex-1 flex items-center justify-center pointer-events-none">
                 {phase === "waiting" ? (
                   <div className="text-center rise w-full">
-                    <p className="text-[#7C8AA8] text-xs sm:text-sm tracking-widest uppercase mb-2 font-semibold">
+                    <p className="text-[#9C8A73] text-xs sm:text-sm tracking-widest uppercase mb-2 font-semibold">
                       Next round in
                     </p>
                     <h1
-                      className="text-5xl sm:text-7xl font-bold text-[#FFB020] tabular-nums blink leading-none"
+                      className="text-5xl sm:text-7xl font-bold text-[#E8A33D] tabular-nums blink leading-none"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       {countdown}s
@@ -609,13 +609,13 @@ export default function AviatorGame() {
                   <div className="text-center rise">
                     <h1
                       className={`text-6xl sm:text-8xl font-bold tabular-nums ${
-                        phase === "crashed" ? "text-[#FF4757]" : mColor.text
+                        phase === "crashed" ? "text-[#E5484D]" : mColor.text
                       }`}
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       {multiplier.toFixed(2)}x
                     </h1>
-                    <p className="mt-3 text-xs sm:text-sm tracking-widest uppercase text-[#7C8AA8] font-bold">
+                    <p className="mt-3 text-xs sm:text-sm tracking-widest uppercase text-[#9C8A73] font-bold">
                       {phase === "crashed" ? "Flew away" : "In flight"}
                     </p>
                   </div>
@@ -804,23 +804,23 @@ function AviatorBetControlPanel({
   }, [phase, isBetPlaced, cashedOutAt, isBusy, token, user, roundId, placedRoundId, panelIndex, multiplier, betAmount, login, onCashedOut]);
 
   return (
-    <div className="bg-[#121A2E] rounded-2xl p-3 sm:p-4 border border-[#22304A] shadow-lg">
+    <div className="bg-[#1B140C] rounded-2xl p-3 sm:p-4 border border-[#3A2818] shadow-lg">
       <div className="flex justify-between items-center mb-2">
-        <label className="text-xs uppercase tracking-wide text-[#7C8AA8] font-bold">
+        <label className="text-xs uppercase tracking-wide text-[#9C8A73] font-bold">
           Bet Panel {panelIndex}
         </label>
         {isBetPlaced && (
-          <span className="text-xs font-semibold text-[#22D67A] bg-[#22D67A]/10 px-2.5 py-0.5 rounded-full border border-[#22D67A]/30">
+          <span className="text-xs font-semibold text-[#FF5A1F] bg-[#FF5A1F]/10 px-2.5 py-0.5 rounded-full border border-[#FF5A1F]/30">
             Active Bet
           </span>
         )}
       </div>
 
-      <div className="flex items-center bg-[#0D1424] rounded-xl p-1 sm:p-1.5 border border-[#22304A]">
+      <div className="flex items-center bg-[#120D08] rounded-xl p-1 sm:p-1.5 border border-[#3A2818]">
         <button
           onClick={() => setBetAmount((a) => Math.max(10, (a || 0) - 10))}
           disabled={isBetPlaced || phase !== "waiting"}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg cursor-pointer"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#3A2818] hover:bg-[#FF5A1F]/20 disabled:opacity-40 font-semibold text-base sm:text-lg cursor-pointer"
         >
           −
         </button>
@@ -828,7 +828,7 @@ function AviatorBetControlPanel({
           type="number"
           min={10}
           disabled={isBetPlaced || phase !== "waiting"}
-          className="bg-transparent flex-1 text-center outline-none text-lg sm:text-xl font-bold tabular-nums text-white disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="bg-transparent flex-1 text-center outline-none text-lg sm:text-xl font-bold tabular-nums text-[#F3E6D6] disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance:none [&::-webkit-inner-spin-button]:appearance:none"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           value={betAmount === 0 ? "" : betAmount}
           onChange={(e) => {
@@ -842,7 +842,7 @@ function AviatorBetControlPanel({
         <button
           onClick={() => setBetAmount((a) => (a || 0) + 10)}
           disabled={isBetPlaced || phase !== "waiting"}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1a2338] hover:bg-[#22304A] disabled:opacity-40 font-semibold text-base sm:text-lg cursor-pointer"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#3A2818] hover:bg-[#FF5A1F]/20 disabled:opacity-40 font-semibold text-base sm:text-lg cursor-pointer"
         >
           +
         </button>
@@ -854,7 +854,7 @@ function AviatorBetControlPanel({
             key={v}
             onClick={() => !isBetPlaced && phase === "waiting" && setBetAmount(v)}
             disabled={isBetPlaced || phase !== "waiting"}
-            className="flex-1 text-xs py-1 sm:py-1.5 rounded-lg bg-[#0D1424] border border-[#22304A] text-[#7C8AA8] hover:text-white disabled:opacity-40 font-semibold"
+            className="flex-1 text-xs py-1 sm:py-1.5 rounded-lg bg-[#120D08] border border-[#3A2818] text-[#9C8A73] hover:text-[#F3E6D6] disabled:opacity-40 font-semibold"
           >
             {v}
           </button>
@@ -867,8 +867,8 @@ function AviatorBetControlPanel({
           disabled={isBetPlaced || isBusy}
           className={`mt-3.5 sm:mt-4 w-full transition rounded-xl py-3.5 sm:py-4 font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 cursor-pointer ${
             isBetPlaced
-              ? "bg-[#22D67A]/20 border border-[#22D67A] text-[#22D67A] cursor-not-allowed"
-              : "bg-[#FFB020] hover:bg-[#F0A415] text-[#0A0F1E] disabled:opacity-50 shadow-lg shadow-[#FFB020]/20"
+              ? "bg-[#FF5A1F]/20 border border-[#FF5A1F] text-[#FF5A1F] cursor-not-allowed"
+              : "bg-[#FF5A1F] hover:bg-[#E64F17] text-[#120D08] disabled:opacity-50 shadow-lg shadow-[#FF5A1F]/20"
           }`}
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
@@ -885,7 +885,7 @@ function AviatorBetControlPanel({
           <button
             onClick={handleCashOut}
             disabled={isBusy}
-            className="mt-3.5 sm:mt-4 w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition rounded-xl py-3.5 sm:py-4 font-extrabold text-base sm:text-lg text-[#0A0F1E] shadow-xl shadow-[#22D67A]/30 flex items-center justify-center gap-2 cursor-pointer"
+            className="mt-3.5 sm:mt-4 w-full bg-[#FF5A1F] hover:bg-[#E64F17] transition rounded-xl py-3.5 sm:py-4 font-extrabold text-base sm:text-lg text-[#120D08] shadow-xl shadow-[#FF5A1F]/30 flex items-center justify-center gap-2 cursor-pointer"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             {isBusy ? (

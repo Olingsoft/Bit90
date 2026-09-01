@@ -21,20 +21,20 @@ export default function TradingChart({ data, currentTick, activeTrades = [] }: T
         // Initialize chart
         const chart = createChart(chartContainerRef.current, {
             layout: {
-                background: { type: ColorType.Solid, color: '#0B0E14' },
-                textColor: '#eceef3',
+                background: { type: ColorType.Solid, color: '#120D08' },
+                textColor: '#F3E6D6',
             },
             grid: {
-                vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
-                horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+                vertLines: { color: 'rgba(58, 40, 24, 0.5)' },
+                horzLines: { color: 'rgba(58, 40, 24, 0.5)' },
             },
             timeScale: {
                 timeVisible: true,
                 secondsVisible: true,
-                borderColor: 'rgba(42, 46, 57, 0.5)',
+                borderColor: 'rgba(58, 40, 24, 0.5)',
             },
             rightPriceScale: {
-                borderColor: 'rgba(42, 46, 57, 0.5)',
+                borderColor: 'rgba(58, 40, 24, 0.5)',
             },
             crosshair: {
                 mode: 0,
@@ -42,11 +42,11 @@ export default function TradingChart({ data, currentTick, activeTrades = [] }: T
         });
 
         const series = chart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
+            upColor: '#FF5A1F',
+            downColor: '#E5484D',
             borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
+            wickUpColor: '#FF5A1F',
+            wickDownColor: '#E5484D',
         });
 
         // Set initial data
@@ -118,7 +118,7 @@ export default function TradingChart({ data, currentTick, activeTrades = [] }: T
             }
 
             const existingLine = existingLines.get(trade.id);
-            const color = trade.direction === 'buy' ? '#26a69a' : '#ef5350';
+            const color = trade.direction === 'buy' ? '#FF5A1F' : '#E5484D';
             const lineWidth = 2;
             const lineStyle = 2; // dashed
 
