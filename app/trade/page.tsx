@@ -192,6 +192,57 @@ export default function Trade() {
                         <ChartToolbar timeframe={timeframe} setTimeframe={setTimeframe} />
                     </div>
                     
+                    {/* Mobile Active Trades Bar */}
+                    {activeTrades.length > 0 && (
+                        <div className="lg:hidden bg-[#11141B] border-b border-[#2A2E39] p-2">
+                            <div className="grid grid-cols-1 gap-2">
+                                {activeTrades.map((trade) => {
+                                    const elapsed = Date.now() - trade.startTime;
+                                    const remaining = Math.max(0, trade.duration - elapsed);
+                                    const progress = Math.min(100, (elapsed / trade.duration) * 100);
+                                    return (
+                                        <div
+                                            key={trade.id}
+                                            className={`px-3 py-2 rounded-lg text-xs border ${
+                                                trade.result === 'win'
+                                                    ? 'bg-green-900/30 border-green-500'
+                                                    : trade.result === 'lose'
+                                                    ? 'bg-red-900/30 border-red-500'
+                                                    : 'bg-[#1a1e28] border-[#2A2E39]'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className={`font-semibold ${
+                                                    trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
+                                                }`}>
+                                                    {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
+                                                </span>
+                                                <span className="text-gray-400 font-medium">
+                                                    {Math.ceil(remaining / 1000)}s
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-[#2A2E39] rounded-full h-2">
+                                                <div
+                                                    className={`h-2 rounded-full transition-all ${
+                                                        trade.result === 'win'
+                                                            ? 'bg-green-500'
+                                                            : trade.result === 'lose'
+                                                            ? 'bg-red-500'
+                                                            : 'bg-blue-500'
+                                                    }`}
+                                                    style={{ width: `${progress}%` }}
+                                                />
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 mt-1">
+                                                Entry: ${trade.entryPrice.toFixed(2)}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="flex-1 relative bg-[#0B0E14]">
                         {historicalData.length > 0 && (
                             <TradingChart 
@@ -249,37 +300,6 @@ export default function Trade() {
                                 />
                             </div>
                         </div>
-                        
-                        {/* Active Trades Mini */}
-                        {activeTrades.length > 0 && (
-                            <div className="flex space-x-2 overflow-x-auto pb-1">
-                                {activeTrades.slice(0, 3).map((trade) => {
-                                    const elapsed = Date.now() - trade.startTime;
-                                    const remaining = Math.max(0, trade.duration - elapsed);
-                                    return (
-                                        <div
-                                            key={trade.id}
-                                            className={`flex-shrink-0 px-2 py-1 rounded text-[10px] border ${
-                                                trade.result === 'win'
-                                                    ? 'bg-green-900/30 border-green-500'
-                                                    : trade.result === 'lose'
-                                                    ? 'bg-red-900/30 border-red-500'
-                                                    : 'bg-[#1a1e28] border-[#2A2E39]'
-                                            }`}
-                                        >
-                                            <span className={`font-semibold ${
-                                                trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
-                                            }`}>
-                                                {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
-                                            </span>
-                                            <span className="text-gray-400 ml-1">
-                                                {Math.ceil(remaining / 1000)}s
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
                     </div>
                     
                     {/* Buy/Sell Buttons */}
