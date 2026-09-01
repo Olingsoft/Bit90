@@ -8,6 +8,18 @@ import MarketStats from "@/components/trade/MarketStats";
 import { SimulationEngine, Candle, Volatility } from "@/components/trade/SimulationEngine";
 import { Menu, X } from "lucide-react";
 
+type TradeDirection = 'call' | 'put';
+
+interface ActiveTrade {
+    id: string;
+    entryPrice: number;
+    amount: number;
+    direction: TradeDirection;
+    startTime: number;
+    duration: number;
+    result?: 'win' | 'lose' | 'pending';
+}
+
 export default function Trade() {
     const [timeframe, setTimeframe] = useState("1m");
     const [isSimulating, setIsSimulating] = useState(true);
@@ -15,6 +27,9 @@ export default function Trade() {
     const [speed, setSpeed] = useState<'Slow' | 'Normal' | 'Fast'>('Normal');
     const [balance, setBalance] = useState(10000.00);
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+    const [tradeAmount, setTradeAmount] = useState(100);
+    const [tradeDuration, setTradeDuration] = useState(10);
+    const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
 
     const [historicalData, setHistoricalData] = useState<Candle[]>([]);
     const [currentCandle, setCurrentCandle] = useState<Candle | undefined>(undefined);
@@ -89,8 +104,69 @@ export default function Trade() {
 
     const handleReset = () => {
         setBalance(10000.00);
+        setActiveTrades([]);
         generateInitialData();
     };
+
+    const placeTrade = (direction: TradeDirection) => {
+        if (!currentCandle || tradeAmount > balance) return;
+
+        const newTrade: ActiveTrade = {
+            id: Date.now().toString(),
+            entryPrice: currentCandle.close,
+            amount: tradeAmount,
+            direction,
+            startTime: Date.now(),
+            duration: tradeDuration * 1000,
+            result: 'pending'
+        };
+
+        setBalance(prev => prev - tradeAmount);
+        setActiveTrades(prev => [...prev, newTrade]);
+    };
+
+    // Check trade results
+    useEffect(() => {
+        if (activeTrades.length === 0 || !currentCandle) return;
+
+        const now = Date.now();
+        const updatedTrades = activeTrades.map(trade => {
+            if (trade.result !== 'pending') return trade;
+
+            const elapsed = now - trade.startTime;
+            if (elapsed >= trade.duration) {
+                const currentPrice = currentCandle.close;
+                const isWin = trade.direction === 'call' 
+                    ? currentPrice > trade.entryPrice 
+                    : currentPrice < trade.entryPrice;
+                
+                return {
+                    ...trade,
+                    result: (isWin ? 'win' : 'lose') as 'win' | 'lose'
+                };
+            }
+            return trade;
+        });
+
+        // Update balance for completed trades
+        const completedTrades = updatedTrades.filter(t => t.result !== 'pending' && activeTrades.find(at => at.id === t.id)?.result === 'pending');
+        if (completedTrades.length > 0) {
+            const balanceChange = completedTrades.reduce((acc, trade) => {
+                if (trade.result === 'win') {
+                    return acc + (trade.amount * 0.9); // 90% payout
+                }
+                return acc; // Already deducted when placed
+            }, 0);
+            
+            if (balanceChange > 0) {
+                setBalance(prev => prev + balanceChange);
+            }
+        }
+
+        // Remove completed trades after showing result
+        const tradesToKeep = updatedTrades.filter(t => t.result === 'pending' || (now - t.startTime - t.duration) < 2000);
+        setActiveTrades(tradesToKeep);
+    }, [currentCandle, activeTrades]);
 
     return (
         <div className="h-screen w-full bg-[#0B0E14] text-[#ECEEF3] flex flex-col overflow-hidden font-sans">
@@ -115,7 +191,12 @@ export default function Trade() {
                     
                     <div className="flex-1 relative bg-[#0B0E14]">
                         {historicalData.length > 0 && (
-                            <TradingChart key={timeframe} data={historicalData} currentTick={currentCandle} />
+                            <TradingChart 
+                                key={timeframe} 
+                                data={historicalData} 
+                                currentTick={currentCandle}
+                                activeTrades={activeTrades}
+                            />
                         )}
                     </div>
                     
@@ -137,6 +218,12 @@ export default function Trade() {
                         speed={speed}
                         setSpeed={setSpeed}
                         onReset={handleReset}
+                        tradeAmount={tradeAmount}
+                        setTradeAmount={setTradeAmount}
+                        tradeDuration={tradeDuration}
+                        setTradeDuration={setTradeDuration}
+                        onPlaceTrade={placeTrade}
+                        activeTrades={activeTrades}
                     />
                 </div>
 
@@ -161,6 +248,12 @@ export default function Trade() {
                                     speed={speed}
                                     setSpeed={setSpeed}
                                     onReset={handleReset}
+                                    tradeAmount={tradeAmount}
+                                    setTradeAmount={setTradeAmount}
+                                    tradeDuration={tradeDuration}
+                                    setTradeDuration={setTradeDuration}
+                                    onPlaceTrade={placeTrade}
+                                    activeTrades={activeTrades}
                                 />
                             </div>
                         </div>

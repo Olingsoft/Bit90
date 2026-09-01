@@ -1,16 +1,30 @@
 import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, ISeriesApi, CandlestickData, Time, ColorType } from 'lightweight-charts';
+import { createChart, IChartApi, ISeriesApi, CandlestickData, Time, ColorType, IPriceLine } from 'lightweight-charts';
 import { Candle } from './SimulationEngine';
+
+type TradeDirection = 'call' | 'put';
+
+interface ActiveTrade {
+    id: string;
+    entryPrice: number;
+    amount: number;
+    direction: TradeDirection;
+    startTime: number;
+    duration: number;
+    result?: 'win' | 'lose' | 'pending';
+}
 
 interface TradingChartProps {
     data: Candle[];
     currentTick?: Candle;
+    activeTrades?: ActiveTrade[];
 }
 
-export default function TradingChart({ data, currentTick }: TradingChartProps) {
+export default function TradingChart({ data, currentTick, activeTrades = [] }: TradingChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+    const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map());
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -86,6 +100,63 @@ export default function TradingChart({ data, currentTick }: TradingChartProps) {
             });
         }
     }, [currentTick]);
+
+    // Manage trade indicators on chart
+    useEffect(() => {
+        if (!seriesRef.current) return;
+
+        const currentTradeIds = new Set(activeTrades.map(t => t.id));
+        const existingLines = priceLinesRef.current;
+
+        // Remove lines for trades that no longer exist
+        for (const [tradeId, line] of existingLines) {
+            if (!currentTradeIds.has(tradeId)) {
+                seriesRef.current.removePriceLine(line);
+                existingLines.delete(tradeId);
+            }
+        }
+
+        // Add or update lines for active trades
+        activeTrades.forEach(trade => {
+            if (trade.result !== 'pending') {
+                // Remove completed trades
+                const existingLine = existingLines.get(trade.id);
+                if (existingLine && seriesRef.current) {
+                    seriesRef.current.removePriceLine(existingLine);
+                    existingLines.delete(trade.id);
+                }
+                return;
+            }
+
+            const existingLine = existingLines.get(trade.id);
+            const color = trade.direction === 'call' ? '#26a69a' : '#ef5350';
+            const lineWidth = 2;
+            const lineStyle = 2; // dashed
+
+            if (existingLine) {
+                // Update existing line
+                existingLine.applyOptions({
+                    price: trade.entryPrice,
+                    color,
+                    lineWidth,
+                    lineStyle,
+                    axisLabelVisible: true,
+                    title: `${trade.direction.toUpperCase()} $${trade.amount}`,
+                });
+            } else if (seriesRef.current) {
+                // Create new line
+                const newLine = seriesRef.current.createPriceLine({
+                    price: trade.entryPrice,
+                    color,
+                    lineWidth,
+                    lineStyle,
+                    axisLabelVisible: true,
+                    title: `${trade.direction.toUpperCase()} $${trade.amount}`,
+                });
+                existingLines.set(trade.id, newLine);
+            }
+        });
+    }, [activeTrades]);
 
     return (
         <div ref={chartContainerRef} className="w-full h-full min-h-[400px]" />
