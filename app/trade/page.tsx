@@ -24,7 +24,6 @@ export default function Trade() {
     const [timeframe, setTimeframe] = useState("1m");
     const [isSimulating, setIsSimulating] = useState(true);
     const [volatility, setVolatility] = useState<Volatility>('Medium');
-    const [speed, setSpeed] = useState<'Slow' | 'Normal' | 'Fast'>('Normal');
     const [balance, setBalance] = useState(10000.00);
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
     const [tradeAmount, setTradeAmount] = useState(100);
@@ -55,13 +54,8 @@ export default function Trade() {
     }, [timeframe]);
 
     const tickMs = useMemo(() => {
-        switch (speed) {
-            case 'Slow': return 1000;
-            case 'Normal': return 500;
-            case 'Fast': return 200;
-            default: return 500;
-        }
-    }, [speed]);
+        return 200; // Always fast
+    }, []);
 
     const generateInitialData = () => {
         engineRef.current = new SimulationEngine(100.00);
@@ -100,7 +94,7 @@ export default function Trade() {
 
         return () => clearInterval(tickInterval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isSimulating, intervalMs, tickMs, volatility]);
+    }, [isSimulating, intervalMs, tickMs]);
 
     const handleReset = () => {
         setBalance(10000.00);
@@ -211,13 +205,6 @@ export default function Trade() {
                     <SimulationPanel
                         balance={balance}
                         currentPrice={currentCandle?.close || 100.00}
-                        isSimulating={isSimulating}
-                        setIsSimulating={setIsSimulating}
-                        volatility={volatility}
-                        setVolatility={setVolatility}
-                        speed={speed}
-                        setSpeed={setSpeed}
-                        onReset={handleReset}
                         tradeAmount={tradeAmount}
                         setTradeAmount={setTradeAmount}
                         tradeDuration={tradeDuration}
@@ -241,13 +228,6 @@ export default function Trade() {
                                 <SimulationPanel
                                     balance={balance}
                                     currentPrice={currentCandle?.close || 100.00}
-                                    isSimulating={isSimulating}
-                                    setIsSimulating={setIsSimulating}
-                                    volatility={volatility}
-                                    setVolatility={setVolatility}
-                                    speed={speed}
-                                    setSpeed={setSpeed}
-                                    onReset={handleReset}
                                     tradeAmount={tradeAmount}
                                     setTradeAmount={setTradeAmount}
                                     tradeDuration={tradeDuration}
