@@ -1,18 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createChart, IChartApi, ISeriesApi, CandlestickData, Time, ColorType, IPriceLine } from 'lightweight-charts';
 import { Candle } from './SimulationEngine';
-
-type TradeDirection = 'call' | 'put';
-
-interface ActiveTrade {
-    id: string;
-    entryPrice: number;
-    amount: number;
-    direction: TradeDirection;
-    startTime: number;
-    duration: number;
-    result?: 'win' | 'lose' | 'pending';
-}
+import { TradeDirection, ActiveTrade } from './types';
 
 interface TradingChartProps {
     data: Candle[];
@@ -129,7 +118,7 @@ export default function TradingChart({ data, currentTick, activeTrades = [] }: T
             }
 
             const existingLine = existingLines.get(trade.id);
-            const color = trade.direction === 'call' ? '#26a69a' : '#ef5350';
+            const color = trade.direction === 'buy' ? '#26a69a' : '#ef5350';
             const lineWidth = 2;
             const lineStyle = 2; // dashed
 
@@ -141,7 +130,7 @@ export default function TradingChart({ data, currentTick, activeTrades = [] }: T
                     lineWidth,
                     lineStyle,
                     axisLabelVisible: true,
-                    title: `${trade.direction.toUpperCase()} $${trade.amount}`,
+                    title: `${trade.direction === 'buy' ? 'BUY' : 'SELL'} $${trade.amount}`,
                 });
             } else if (seriesRef.current) {
                 // Create new line
@@ -151,7 +140,7 @@ export default function TradingChart({ data, currentTick, activeTrades = [] }: T
                     lineWidth,
                     lineStyle,
                     axisLabelVisible: true,
-                    title: `${trade.direction.toUpperCase()} $${trade.amount}`,
+                    title: `${trade.direction === 'buy' ? 'BUY' : 'SELL'} $${trade.amount}`,
                 });
                 existingLines.set(trade.id, newLine);
             }

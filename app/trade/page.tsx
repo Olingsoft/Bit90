@@ -7,18 +7,7 @@ import TradingChart from "@/components/trade/TradingChart";
 import MarketStats from "@/components/trade/MarketStats";
 import { SimulationEngine, Candle, Volatility } from "@/components/trade/SimulationEngine";
 import { Menu, X, TrendingUp, TrendingDown } from 'lucide-react';
-
-type TradeDirection = 'call' | 'put';
-
-interface ActiveTrade {
-    id: string;
-    entryPrice: number;
-    amount: number;
-    direction: TradeDirection;
-    startTime: number;
-    duration: number;
-    result?: 'win' | 'lose' | 'pending';
-}
+import { TradeDirection, ActiveTrade } from "@/components/trade/types";
 
 export default function Trade() {
     const [timeframe, setTimeframe] = useState("1m");
@@ -35,11 +24,16 @@ export default function Trade() {
 
     const engineRef = useRef<SimulationEngine>(new SimulationEngine(100.00));
     const currentCandleRef = useRef<Candle | undefined>(undefined);
+    const activeTradesRef = useRef<ActiveTrade[]>([]);
     
-    // Sync ref
+    // Sync refs
     useEffect(() => {
         currentCandleRef.current = currentCandle;
     }, [currentCandle]);
+    
+    useEffect(() => {
+        activeTradesRef.current = activeTrades;
+    }, [activeTrades]);
     
     // Derived values
     const intervalMs = useMemo(() => {
@@ -119,18 +113,27 @@ export default function Trade() {
         setActiveTrades(prev => [...prev, newTrade]);
     };
 
+    const directionToCall = (direction: TradeDirection): 'call' | 'put' => {
+        return direction === 'buy' ? 'call' : 'put';
+    };
+
+    const callToDirection = (call: 'call' | 'put'): TradeDirection => {
+        return call === 'call' ? 'buy' : 'sell';
+    };
+
     // Check trade results
     useEffect(() => {
-        if (activeTrades.length === 0 || !currentCandle) return;
+        const trades = activeTradesRef.current;
+        if (trades.length === 0 || !currentCandle) return;
 
         const now = Date.now();
-        const updatedTrades = activeTrades.map(trade => {
+        const updatedTrades = trades.map(trade => {
             if (trade.result !== 'pending') return trade;
 
             const elapsed = now - trade.startTime;
             if (elapsed >= trade.duration) {
                 const currentPrice = currentCandle.close;
-                const isWin = trade.direction === 'call' 
+                const isWin = trade.direction === 'buy' 
                     ? currentPrice > trade.entryPrice 
                     : currentPrice < trade.entryPrice;
                 
@@ -143,7 +146,7 @@ export default function Trade() {
         });
 
         // Update balance for completed trades
-        const completedTrades = updatedTrades.filter(t => t.result !== 'pending' && activeTrades.find(at => at.id === t.id)?.result === 'pending');
+        const completedTrades = updatedTrades.filter(t => t.result !== 'pending' && trades.find(at => at.id === t.id)?.result === 'pending');
         if (completedTrades.length > 0) {
             const balanceChange = completedTrades.reduce((acc, trade) => {
                 if (trade.result === 'win') {
@@ -160,7 +163,7 @@ export default function Trade() {
         // Remove completed trades after showing result
         const tradesToKeep = updatedTrades.filter(t => t.result === 'pending' || (now - t.startTime - t.duration) < 2000);
         setActiveTrades(tradesToKeep);
-    }, [currentCandle, activeTrades]);
+    }, [currentCandle]);
 
     return (
         <div className="h-screen w-full bg-[#0B0E14] text-[#ECEEF3] flex flex-col overflow-hidden font-sans">
@@ -265,9 +268,9 @@ export default function Trade() {
                                             }`}
                                         >
                                             <span className={`font-semibold ${
-                                                trade.direction === 'call' ? 'text-green-400' : 'text-red-400'
+                                                trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
                                             }`}>
-                                                {trade.direction === 'call' ? 'BUY' : 'SELL'} ${trade.amount}
+                                                {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
                                             </span>
                                             <span className="text-gray-400 ml-1">
                                                 {Math.ceil(remaining / 1000)}s
@@ -282,7 +285,7 @@ export default function Trade() {
                     {/* Buy/Sell Buttons */}
                     <div className="flex border-t border-[#2A2E39]">
                         <button
-                            onClick={() => placeTrade('call')}
+                            onClick={() => placeTrade('buy')}
                             disabled={tradeAmount > balance}
                             className={`flex-1 py-3 font-bold text-sm transition-all flex items-center justify-center space-x-1 ${
                                 tradeAmount > balance
@@ -295,7 +298,7 @@ export default function Trade() {
                             <span className="text-[10px] opacity-80">+{tradeAmount * 0.9}</span>
                         </button>
                         <button
-                            onClick={() => placeTrade('put')}
+                            onClick={() => placeTrade('sell')}
                             disabled={tradeAmount > balance}
                             className={`flex-1 py-3 font-bold text-sm transition-all flex items-center justify-center space-x-1 ${
                                 tradeAmount > balance
@@ -371,9 +374,9 @@ export default function Trade() {
                                                     >
                                                         <div className="flex justify-between items-center mb-1">
                                                             <span className={`text-xs font-semibold ${
-                                                                trade.direction === 'call' ? 'text-green-400' : 'text-red-400'
+                                                                trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
                                                             }`}>
-                                                                {trade.direction === 'call' ? 'BUY' : 'SELL'} ${trade.amount}
+                                                                {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
                                                             </span>
                                                             {trade.result ? (
                                                                 <span className={`text-xs font-bold ${

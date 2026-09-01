@@ -1,16 +1,5 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
-
-type TradeDirection = 'call' | 'put';
-
-interface ActiveTrade {
-    id: string;
-    entryPrice: number;
-    amount: number;
-    direction: TradeDirection;
-    startTime: number;
-    duration: number;
-    result?: 'win' | 'lose' | 'pending';
-}
+import { TradeDirection, ActiveTrade } from './types';
 
 interface SimulationPanelProps {
     balance: number;
@@ -102,7 +91,7 @@ export default function SimulationPanel({
                 {/* Buy/Sell Buttons */}
                 <div className="space-y-2">
                     <button
-                        onClick={() => onPlaceTrade('call')}
+                        onClick={() => onPlaceTrade('buy')}
                         disabled={tradeAmount > balance}
                         className={`w-full py-3 rounded-lg font-bold text-base transition-all flex items-center justify-center space-x-2 ${
                             tradeAmount > balance
@@ -115,7 +104,7 @@ export default function SimulationPanel({
                         <span className="text-xs opacity-80">+{tradeAmount * 0.9}</span>
                     </button>
                     <button
-                        onClick={() => onPlaceTrade('put')}
+                        onClick={() => onPlaceTrade('sell')}
                         disabled={tradeAmount > balance}
                         className={`w-full py-3 rounded-lg font-bold text-base transition-all flex items-center justify-center space-x-2 ${
                             tradeAmount > balance
@@ -152,9 +141,9 @@ export default function SimulationPanel({
                                     >
                                         <div className="flex justify-between items-center mb-1">
                                             <span className={`text-xs font-semibold ${
-                                                trade.direction === 'call' ? 'text-green-400' : 'text-red-400'
+                                                trade.direction === 'buy' ? 'text-green-400' : 'text-red-400'
                                             }`}>
-                                                {trade.direction === 'call' ? 'BUY' : 'SELL'} ${trade.amount}
+                                                {trade.direction === 'buy' ? 'BUY' : 'SELL'} ${trade.amount}
                                             </span>
                                             {trade.result ? (
                                                 <span className={`text-xs font-bold ${
