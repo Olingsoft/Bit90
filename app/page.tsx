@@ -33,14 +33,14 @@ function WinTicker() {
   ];
   const loop = [...wins, ...wins];
   return (
-    <div className="relative border-y border-[#3A2818] bg-[#1B140C] overflow-hidden">
-      <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#1B140C] to-transparent" />
-      <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#1B140C] to-transparent" />
+    <div className="relative border-y border-[#E5E5E5] bg-[#FAFAFA] overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#FAFAFA] to-transparent" />
+      <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#FAFAFA] to-transparent" />
       <div className="flex whitespace-nowrap py-2 win-ticker-track">
         {loop.map((w, i) => (
           <span
             key={i}
-            className="mx-6 text-[12px] text-[#9C8A73] flex items-center gap-2 shrink-0"
+            className="mx-6 text-[12px] text-[#666666] flex items-center gap-2 shrink-0"
             style={{ fontFamily: BODY_FONT }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F]" />
@@ -72,12 +72,12 @@ function TicketPanel({
 }) {
   return (
     <div
-      className="relative bg-[#1B140C] border border-[#3A2818]"
+      className="relative bg-[#FFFFFF] border border-[#E5E5E5] shadow-sm"
       style={{ clipPath: "polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%)" }}
     >
       <div
         className="absolute top-0 right-0 text-[10px] font-semibold px-2 py-1"
-        style={{ fontFamily: BODY_FONT, color: "#120D08", background: tagColor, transform: "translate(0,0)" }}
+        style={{ fontFamily: BODY_FONT, color: "#FFFFFF", background: tagColor, transform: "translate(0,0)" }}
       >
         {tag}
       </div>
@@ -89,9 +89,9 @@ function TicketPanel({
 function Perforation() {
   return (
     <div className="relative h-0 mx-5 sm:mx-7">
-      <div className="absolute left-[-14px] right-[-14px] top-0 border-t border-dashed border-[#3A2818]" />
-      <div className="absolute -left-[19px] -top-2 w-4 h-4 rounded-full bg-[#0B0704]" />
-      <div className="absolute -right-[19px] -top-2 w-4 h-4 rounded-full bg-[#0B0704]" />
+      <div className="absolute left-[-14px] right-[-14px] top-0 border-t border-dashed border-[#E5E5E5]" />
+      <div className="absolute -left-[19px] -top-2 w-4 h-4 rounded-full bg-[#F5F5F5]" />
+      <div className="absolute -right-[19px] -top-2 w-4 h-4 rounded-full bg-[#F5F5F5]" />
     </div>
   );
 }
@@ -135,17 +135,17 @@ function AviatorCard() {
         <div className="flex items-center justify-between gap-4 mb-5">
           <div>
             <h2
-              className="text-4xl sm:text-5xl leading-none mb-1 text-[#F3E6D6]"
+              className="text-4xl sm:text-5xl leading-none mb-1 text-[#1A1A1A]"
               style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.5px" }}
             >
               Aviator
             </h2>
-            <p className="text-[#9C8A73] text-sm max-w-xs leading-relaxed" style={{ fontFamily: BODY_FONT }}>
+            <p className="text-[#666666] text-sm max-w-xs leading-relaxed" style={{ fontFamily: BODY_FONT }}>
               Cash out before the plane leaves. One curve, one call.
             </p>
           </div>
 
-          <div className="relative w-32 h-20 sm:w-36 sm:h-24 rounded-none border border-[#3A2818] bg-[#120D08] flex items-center justify-center overflow-hidden shrink-0">
+          <div className="relative w-32 h-20 sm:w-36 sm:h-24 rounded-none border border-[#E5E5E5] bg-[#F9F9F9] flex items-center justify-center overflow-hidden shrink-0">
             <svg viewBox="0 0 300 160" className="absolute inset-0 w-full h-full">
               <defs>
                 <linearGradient id="heroTrail" x1="0" y1="1" x2="1" y2="0">
@@ -183,14 +183,14 @@ function AviatorCard() {
         <Perforation />
 
         <div className="flex items-center justify-between pt-5">
-          <div className="flex items-center gap-5 text-[12px] text-[#9C8A73]" style={{ fontFamily: BODY_FONT }}>
+          <div className="flex items-center gap-5 text-[12px] text-[#666666]" style={{ fontFamily: BODY_FONT }}>
             <span>Spribe</span>
             <span>97% return</span>
             <span>4,821 playing now</span>
           </div>
           <Link
             href="/aviator"
-            className="inline-flex items-center justify-center bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#120D08] font-semibold px-5 py-2.5 text-sm"
+            className="inline-flex items-center justify-center bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#FFFFFF] font-semibold px-5 py-2.5 text-sm"
             style={{ fontFamily: BODY_FONT }}
           >
             Play Aviator
@@ -224,17 +224,17 @@ function Bit90TradeCard() {
         <div className="flex items-center justify-between gap-4 mb-5">
           <div>
             <h2
-              className="text-4xl sm:text-5xl leading-none mb-1 text-[#F3E6D6]"
+              className="text-4xl sm:text-5xl leading-none mb-1 text-[#1A1A1A]"
               style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.5px" }}
             >
               Bit90 Trade
             </h2>
-            <p className="text-[#9C8A73] text-sm max-w-xs leading-relaxed" style={{ fontFamily: BODY_FONT }}>
+            <p className="text-[#666666] text-sm max-w-xs leading-relaxed" style={{ fontFamily: BODY_FONT }}>
               Real-time feeds, instant execution, fast markets.
             </p>
           </div>
 
-          <div className="relative w-32 h-20 sm:w-36 sm:h-24 border border-[#3A2818] bg-[#120D08] flex items-center justify-center overflow-hidden shrink-0">
+          <div className="relative w-32 h-20 sm:w-36 sm:h-24 border border-[#E5E5E5] bg-[#F9F9F9] flex items-center justify-center overflow-hidden shrink-0">
             <svg viewBox="0 0 300 160" className="absolute inset-0 w-full h-full opacity-70">
               <polyline
                 fill="none"
@@ -257,14 +257,14 @@ function Bit90TradeCard() {
         <Perforation />
 
         <div className="flex items-center justify-between pt-5">
-          <div className="flex items-center gap-5 text-[12px] text-[#9C8A73]" style={{ fontFamily: BODY_FONT }}>
+          <div className="flex items-center gap-5 text-[12px] text-[#666666]" style={{ fontFamily: BODY_FONT }}>
             <span>Bit90 core</span>
             <span>Up to 99% payout</span>
             <span>3,150 trading now</span>
           </div>
           <Link
             href="/trade"
-            className="inline-flex items-center justify-center bg-[#E8A33D] hover:bg-[#D5922F] transition-colors text-[#120D08] font-semibold px-5 py-2.5 text-sm"
+            className="inline-flex items-center justify-center bg-[#E8A33D] hover:bg-[#D5922F] transition-colors text-[#FFFFFF] font-semibold px-5 py-2.5 text-sm"
             style={{ fontFamily: BODY_FONT }}
           >
             Start trading
@@ -280,10 +280,10 @@ export default function HomePage() {
   const [query, setQuery] = useState<string>("");
 
   return (
-    <div className="min-h-screen w-full bg-[#120D08] text-[#F3E6D6]" style={{ fontFamily: BODY_FONT }}>
+    <div className="min-h-screen w-full bg-[#F8F8F8] text-[#1A1A1A]" style={{ fontFamily: BODY_FONT }}>
       <style>{`
         ::-webkit-scrollbar { height: 5px; width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #3A2818; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #D1D1D1; border-radius: 4px; }
         a:focus-visible, button:focus-visible { outline: 2px solid #FF5A1F; outline-offset: 2px; }
       `}</style>
 
@@ -296,14 +296,14 @@ export default function HomePage() {
           <Bit90TradeCard />
         </div>
 
-        <footer className="pt-8 mt-6 border-t border-[#3A2818]">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-[#9C8A73] mb-3">
-            <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">About</a>
-            <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">Terms & conditions</a>
-            <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">Responsible gaming</a>
-            <a className="hover:text-[#F3E6D6] transition-colors cursor-pointer">Support</a>
+        <footer className="pt-8 mt-6 border-t border-[#E5E5E5]">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-[#666666] mb-3">
+            <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">About</a>
+            <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Terms & conditions</a>
+            <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Responsible gaming</a>
+            <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Support</a>
           </div>
-          <p className="text-[11px] text-[#6E5C46] leading-relaxed max-w-2xl">
+          <p className="text-[11px] text-[#999999] leading-relaxed max-w-2xl">
             18+. Play responsibly. Bit90 provides high-frequency gaming and trading interfaces.
             Financial products and games carry risk — trade and bet within your limits.
           </p>

@@ -7,7 +7,6 @@ import { useAuth } from "@/components/AuthProvider";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
 
-const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 interface ToastProps {
@@ -70,7 +69,7 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
         transition: "transform 0.35s cubic-bezier(.22,1,.36,1), opacity 0.35s ease",
       }}
     >
-      <div className="relative overflow-hidden bg-[#121A2E] border border-[#22D67A]/40 rounded-2xl shadow-2xl shadow-[#22D67A]/10">
+      <div className="relative overflow-hidden bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl shadow-2xl shadow-black/5">
         {/* Top accent line */}
         <div className="h-0.5 w-full bg-gradient-to-r from-[#22D67A] to-[#1CBE6B]" />
 
@@ -90,8 +89,8 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white leading-snug">Deposit Initiated 🎉</p>
-            <p className="text-xs text-[#7C8AA8] mt-0.5 leading-relaxed">{message}</p>
+            <p className="text-sm font-semibold text-[#1A1A1A] leading-snug">Deposit Initiated 🎉</p>
+            <p className="text-xs text-[#666666] mt-0.5 leading-relaxed">{message}</p>
             {balance !== undefined && (
               <p className="text-xs font-semibold text-[#22D67A] mt-1">
                 New Balance: KSh {balance.toLocaleString()}
@@ -104,7 +103,7 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
         </div>
 
         {/* Progress bar */}
-        <div className="h-0.5 bg-[#0D1424]">
+        <div className="h-0.5 bg-[#F5F5F5]">
           <div
             className="h-full bg-[#22D67A]/60 transition-none"
             style={{ width: `${progress}%` }}
@@ -112,7 +111,7 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
         </div>
 
         {/* Progress label */}
-        <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-[#7C8AA8]">
+        <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-[#666666]">
           {isPolling ? (
             <>
               <svg className="w-3 h-3 animate-spin text-[#22D67A]" viewBox="0 0 24 24" fill="none">
@@ -142,7 +141,7 @@ export default function DepositPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [phone, setPhone] = useState("");
-  const [amount, setAmount] = useState<number | "">(500);
+  const [amount, setAmount] = useState<number | "">(50);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error" | ""; message: string }>({
     type: "",
@@ -241,15 +240,11 @@ export default function DepositPage() {
   // content never flashes to an unauthenticated visitor.
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen w-full bg-[#0A0F1E] flex items-center justify-center">
+      <div className="min-h-screen w-full bg-[#F8F8F8] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-[#22D67A] border-t-transparent animate-spin" />
       </div>
     );
   }
-
-  const handleQuickAmount = (val: number) => {
-    setAmount(val);
-  };
 
   const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -310,7 +305,7 @@ export default function DepositPage() {
 
   return (
     <div
-      className="min-h-screen w-full bg-[#0A0F1E] text-[#E7ECF6]"
+      className="min-h-screen w-full bg-[#F8F8F8] text-[#1A1A1A]"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
       {/* Success toast — mounts when deposit succeeds */}
@@ -329,26 +324,26 @@ export default function DepositPage() {
         {/* Title Section */}
         <div className="mb-6 text-center sm:text-left">
           <h1
-            className="text-2xl sm:text-3xl font-bold text-white tracking-tight"
+            className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             Deposit Funds
           </h1>
-          <p className="text-sm text-[#7C8AA8] mt-1">
+          <p className="text-sm text-[#666666] mt-1">
             Instant automatic top-up via M-PESA Express (STK Push)
           </p>
         </div>
 
         {/* Deposit Card */}
-        <div className="bg-[#121A2E] rounded-2xl p-4 sm:p-6 border border-[#22304A] shadow-xl">
+        <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-6 border border-[#E5E5E5] shadow-sm">
           <form onSubmit={handleDeposit} className="space-y-5">
             {/* Phone Number Field */}
             <div>
-              <label className="block text-xs uppercase tracking-wide text-[#7C8AA8] font-semibold mb-2">
+              <label className="block text-xs uppercase tracking-wide text-[#666666] font-semibold mb-2">
                 M-PESA Phone Number
               </label>
-              <div className="relative flex items-center bg-[#0D1424] rounded-xl border border-[#22304A] focus-within:border-[#22D67A] transition-colors overflow-hidden">
-                <span className="pl-4 pr-2 text-sm font-semibold text-[#7C8AA8] select-none">
+              <div className="relative flex items-center bg-[#F9F9F9] rounded-xl border border-[#E5E5E5] focus-within:border-[#22D67A] transition-colors overflow-hidden">
+                <span className="pl-4 pr-2 text-sm font-semibold text-[#666666] select-none">
                   +254
                 </span>
                 <input
@@ -356,7 +351,7 @@ export default function DepositPage() {
                   placeholder="712 345 678"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-transparent py-3.5 pr-4 text-white text-base outline-none font-medium placeholder-[#3A4A6B]"
+                  className="w-full bg-transparent py-3.5 pr-4 text-[#1A1A1A] text-base outline-none font-medium placeholder-[#999999]"
                   required
                 />
               </div>
@@ -365,54 +360,38 @@ export default function DepositPage() {
             {/* Amount Field */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs uppercase tracking-wide text-[#7C8AA8] font-semibold">
+                <label className="text-xs uppercase tracking-wide text-[#666666] font-semibold">
                   Deposit Amount (KSh)
                 </label>
-                <span className="text-xs text-[#7C8AA8]">Min: KSh 10</span>
+                <span className="text-xs text-[#666666]">Min: KSh 1</span>
               </div>
-              <div className="relative flex items-center bg-[#0D1424] rounded-xl border border-[#22304A] focus-within:border-[#22D67A] transition-colors">
+              <div className="relative flex items-center bg-[#F9F9F9] rounded-xl border border-[#E5E5E5] focus-within:border-[#22D67A] transition-colors">
                 <span className="pl-4 text-base font-bold text-[#22D67A] select-none">
                   KSh
                 </span>
                 <input
                   type="number"
                   placeholder="0.00"
-                  min="10"
+                  min="1"
                   value={amount}
                   onChange={(e) =>
                     setAmount(e.target.value ? Number(e.target.value) : "")
                   }
-                  className="w-full bg-transparent py-3.5 px-3 text-white text-xl font-bold outline-none tabular-nums"
+                  className="w-full bg-transparent py-3.5 px-3 text-[#1A1A1A] text-xl font-bold outline-none tabular-nums"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                   required
                 />
               </div>
 
-              {/* Quick Amount Buttons */}
-              <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mt-3">
-                {QUICK_AMOUNTS.map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => handleQuickAmount(val)}
-                    className={`py-2 rounded-lg text-xs font-semibold border transition-all ${amount === val
-                        ? "bg-[#22D67A]/20 border-[#22D67A] text-[#22D67A]"
-                        : "bg-[#0D1424] border-[#22304A] text-[#7C8AA8] hover:text-white hover:border-[#3A4A6B]"
-                      }`}
-                  >
-                    +{val}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* M-PESA Info Banner */}
-            <div className="flex items-start gap-3 bg-[#0D1424] p-3.5 rounded-xl border border-[#22304A]">
+            <div className="flex items-start gap-3 bg-[#F9F9F9] p-3.5 rounded-xl border border-[#E5E5E5]">
               <div className="w-8 h-8 rounded-lg bg-[#22D67A]/10 border border-[#22D67A]/30 flex items-center justify-center shrink-0">
                 <span className="text-[#22D67A] text-xs font-bold">M</span>
               </div>
-              <div className="text-xs text-[#7C8AA8] leading-relaxed">
-                You will receive an <span className="text-white font-medium">M-PESA prompt</span> on your phone asking to enter your PIN to authorize the payment.
+              <div className="text-xs text-[#666666] leading-relaxed">
+                You will receive an <span className="text-[#1A1A1A] font-medium">M-PESA prompt</span> on your phone asking to enter your PIN to authorize the payment.
               </div>
             </div>
 
@@ -420,12 +399,12 @@ export default function DepositPage() {
             <button
               type="submit"
               disabled={authLoading || isLoading || !phone || !amount}
-              className="w-full bg-[#22D67A] hover:bg-[#1CBE6B] disabled:bg-[#1a382b] disabled:text-[#4A7A64] text-[#0A0F1E] font-bold text-base py-4 rounded-xl transition duration-150 flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg shadow-[#22D67A]/10"
+              className="w-full bg-[#22D67A] hover:bg-[#1CBE6B] disabled:bg-[#D1D1D1] disabled:text-[#999999] text-[#FFFFFF] font-bold text-base py-4 rounded-xl transition duration-150 flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg shadow-[#22D67A]/10"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-[#0A0F1E]" viewBox="0 0 24 24" fill="none">
+                  <svg className="animate-spin h-5 w-5 text-[#FFFFFF]" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
@@ -446,7 +425,7 @@ export default function DepositPage() {
         </div>
 
         {/* Security / Help Note */}
-        <p className="text-center text-xs text-[#7C8AA8] mt-6">
+        <p className="text-center text-xs text-[#666666] mt-6">
           Encrypted &amp; direct integration with Safaricom M-PESA API.
         </p>
       </main>

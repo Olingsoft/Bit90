@@ -62,21 +62,21 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0A0F1E] text-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-[#F8F8F8] text-[#1A1A1A] flex items-center justify-center p-4">
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm bg-[#12151C] border border-gray-700 rounded-xl p-6 text-center shadow-xl">
-            <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-2xl mx-auto mb-4">
+          <div className="w-full max-w-sm bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl p-6 text-center shadow-xl">
+            <div className="w-14 h-14 rounded-full bg-[#22D67A]/20 flex items-center justify-center text-[#22D67A] text-2xl mx-auto mb-4">
               ✓
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Registration Successful</h2>
-            <p className="text-gray-400 text-sm mb-6">
+            <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">Registration Successful</h2>
+            <p className="text-[#666666] text-sm mb-6">
               Your account has been created. Sign in to continue.
             </p>
             <button
               type="button"
               onClick={goToLogin}
-              className="w-full bg-orange-500 hover:bg-orange-600 transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
+              className="w-full bg-[#22D67A] hover:bg-[#1CBE6B] transition text-[#FFFFFF] font-semibold py-3 rounded-lg text-sm"
             >
               Go to Login
             </button>
@@ -89,13 +89,13 @@ export default function RegisterPage() {
           <div className="mb-4">
             <Image src={Logo} alt="Bit90 Logo" width={150} height={50} className="h-12 w-auto mx-auto object-contain" priority />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400 text-sm">Sign up to get started</p>
+          <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">Create Account</h1>
+          <p className="text-[#666666] text-sm">Sign up to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[#666666] mb-2">
               Phone Number
             </label>
             <input
@@ -103,13 +103,13 @@ export default function RegisterPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter your phone number"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#22D67A]/50 placeholder:text-[#999999] text-[#1A1A1A]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[#666666] mb-2">
               Password
             </label>
             <input
@@ -117,13 +117,13 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a password"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#22D67A]/50 placeholder:text-[#999999] text-[#1A1A1A]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[#666666] mb-2">
               Confirm Password
             </label>
             <input
@@ -131,27 +131,27 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-orange-500/50 placeholder:text-gray-500 text-gray-100"
+              className="w-full bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#22D67A]/50 placeholder:text-[#999999] text-[#1A1A1A]"
               required
             />
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
+            <p className="text-[#FF4757] text-sm text-center">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition text-gray-900 font-semibold py-3 rounded-lg text-sm"
+            className="w-full bg-[#22D67A] hover:bg-[#1CBE6B] disabled:opacity-60 disabled:cursor-not-allowed transition text-[#FFFFFF] font-semibold py-3 rounded-lg text-sm"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
 
-        <p className="text-center text-gray-400 text-sm mt-6">
+        <p className="text-center text-[#666666] text-sm mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-orange-500 hover:text-orange-400 font-medium">
+          <Link href="/login" className="text-[#22D67A] hover:text-[#1CBE6B] font-medium">
             Sign In
           </Link>
         </p>
