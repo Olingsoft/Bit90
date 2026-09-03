@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { API_URL } from '@/lib/api'
 import Image from 'next/image'
-import Logo from '@/public/bit90logo.jpg'
+import Logo from '@/public/bit90logo.png'
 
 export default function RegisterPage() {
   const router = useRouter()

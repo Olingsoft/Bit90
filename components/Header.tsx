@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 
-import Logo from '@/public/bit90logo.jpg'
+import Logo from '@/public/bit90logo.png'
 import Image from 'next/image'
 
 interface HeaderProps {
@@ -56,7 +56,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
       <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2 sm:gap-4">
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
-          <Image src={Logo} alt="Bit90 Logo" width={110} height={32} className="h-7 w-auto object-contain" priority />
+          <Image src={Logo} alt="Bit90 Logo" width={150} height={44} className="h-10 w-auto object-contain" priority />
         </Link>
 
         {/* DESKTOP NAV */}
@@ -112,7 +112,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
           )}
 
           <Link href="/deposit">
-            <button className="bg-[#22D67A] hover:bg-[#1CBE6B] transition-colors text-[#FFFFFF] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
+            <button className="bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#FFFFFF] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
               Deposit
             </button>
           </Link>
@@ -195,12 +195,9 @@ export default function Header({ query, setQuery }: HeaderProps) {
                 <Link
                   href="/account"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-[13px] text-[#666666] hover:text-[#1A1A1A] transition-colors"
+                  className="text-[13px] text-[#666666] hover:text-[#1A1A1A] transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                  </svg>
-                  My Profile
+                  My Account
                 </Link>
                 <button
                   type="button"

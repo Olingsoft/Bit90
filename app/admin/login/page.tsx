@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { API_URL } from '@/lib/api'
-import Logo from '@/public/bit90logo.jpg'
+import Logo from '@/public/bit90logo.png'
 
 export default function AdminLogin() {
   const [phoneNumber, setPhoneNumber] = useState('')
