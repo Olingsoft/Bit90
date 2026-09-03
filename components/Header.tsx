@@ -88,13 +88,13 @@ export default function Header({ query, setQuery }: HeaderProps) {
                 </span>
               </div>
 
-              {/* PROFILE ICON — navigates directly to /account */}
+              {/* PROFILE ICON — navigates directly to /account (hidden on mobile) */}
               <Link
                 href="/account"
                 id="account-profile-btn"
                 title="My Profile & Transactions"
                 aria-label="My Profile"
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#22D67A] to-[#1CBE6B] hover:from-[#1CBE6B] hover:to-[#16A85C] transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#22D67A]/20 hover:shadow-[#22D67A]/35 hover:scale-105 active:scale-95"
+                className="hidden md:block w-8 h-8 rounded-full bg-gradient-to-br from-[#22D67A] to-[#1CBE6B] hover:from-[#1CBE6B] hover:to-[#16A85C] transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#22D67A]/20 hover:shadow-[#22D67A]/35 hover:scale-105 active:scale-95"
               >
                 <svg className="w-[18px] h-[18px] text-[#120D08]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
