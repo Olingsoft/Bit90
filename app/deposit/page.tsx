@@ -171,15 +171,16 @@ export default function DepositPage() {
   // Poll transaction status
   useEffect(() => {
     if (!transactionId || !isPolling) {
-      console.log("Polling skipped - transactionId:", transactionId, "isPolling:", isPolling);
       return;
     }
 
     console.log("Starting transaction polling for:", transactionId);
 
+    let pollCount = 0;
+
     const pollInterval = setInterval(async () => {
       try {
-        console.log("Polling transaction status...");
+        pollCount += 1;
         const activeToken = token || getToken();
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
@@ -188,29 +189,73 @@ export default function DepositPage() {
           headers["Authorization"] = `Bearer ${activeToken}`;
         }
 
+        // Hit Safaricom STK Query at most every ~15s (every 3rd poll) and only after
+        // the first 15s so the callback has time to arrive. Polling every 3s caused
+        // spike-arrest errors and false FAILED statuses (ResultCode 4999).
+        const shouldQuerySafaricom = pollCount >= 3 && pollCount % 3 === 0;
+
+        if (shouldQuerySafaricom) {
+          try {
+            const verifyRes = await fetch(`${API_URL}users/mpesa/verify`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ transactionId }),
+            });
+
+            if (verifyRes.ok) {
+              const verifyData = await verifyRes.json();
+              const tx = verifyData.transaction;
+              if (tx) {
+                if (tx.status === "completed") {
+                  console.log("Transaction verified as completed!");
+                  setIsPolling(false);
+                  if (user && tx.balanceAfter !== undefined && activeToken) {
+                    login(activeToken, { ...user, balance: tx.balanceAfter });
+                  }
+                  setToast({
+                    message: "Deposit completed successfully!",
+                    balance: tx.balanceAfter,
+                  });
+                  return;
+                } else if (tx.status === "failed") {
+                  console.log("Transaction verified as failed");
+                  setIsPolling(false);
+                  setStatus({
+                    type: "error",
+                    message: verifyData.message || "Transaction failed or was cancelled.",
+                  });
+                  setToast(null);
+                  return;
+                }
+              }
+            }
+          } catch (verifyErr) {
+            console.warn("Active verify check error:", verifyErr);
+          }
+        }
+
+        // 2. Passive check against user's transactions list (callback is source of truth)
         const res = await fetch(`${API_URL}users/transactions`, {
           method: "GET",
           headers,
         });
 
-        console.log("Transactions API response status:", res.status);
-
         if (res.ok) {
           const transactions = await res.json();
-          console.log("Fetched transactions:", transactions.length);
           const transaction = transactions.find((t: any) => t._id === transactionId || t.id === transactionId);
 
-          console.log("Found transaction:", transaction ? transaction.status : "not found");
-
           if (transaction) {
-            if (transaction.status === 'completed') {
+            if (transaction.status === "completed") {
               console.log("Transaction completed successfully!");
               setIsPolling(false);
+              if (user && transaction.balanceAfter !== undefined && activeToken) {
+                login(activeToken, { ...user, balance: transaction.balanceAfter });
+              }
               setToast({
                 message: "Deposit completed successfully!",
                 balance: transaction.balanceAfter,
               });
-            } else if (transaction.status === 'failed') {
+            } else if (transaction.status === "failed") {
               console.log("Transaction failed");
               setIsPolling(false);
               setStatus({
@@ -218,23 +263,18 @@ export default function DepositPage() {
                 message: "Transaction failed. Please try again.",
               });
               setToast(null);
-            } else {
-              console.log("Transaction still pending:", transaction.status);
             }
           }
-        } else {
-          console.error("Failed to fetch transactions:", res.status);
         }
       } catch (err) {
         console.error("Polling error:", err);
       }
-    }, 3000); // Poll every 3 seconds
+    }, 5000);
 
     return () => {
-      console.log("Clearing polling interval");
       clearInterval(pollInterval);
     };
-  }, [transactionId, isPolling, token]);
+  }, [transactionId, isPolling, token, user, login]);
 
   // While auth is hydrating, show a full-screen spinner so the page
   // content never flashes to an unauthenticated visitor.
