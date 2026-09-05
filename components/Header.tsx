@@ -22,9 +22,32 @@ function formatBalance(balance?: number) {
 
 export default function Header({ query, setQuery }: HeaderProps) {
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, logout, refreshBalance } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+
+    const syncBalance = () => {
+      void refreshBalance()
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') syncBalance()
+    }
+
+    syncBalance()
+    window.addEventListener('focus', syncBalance)
+    window.addEventListener('bit90:balance-updated', syncBalance)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      window.removeEventListener('focus', syncBalance)
+      window.removeEventListener('bit90:balance-updated', syncBalance)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [user?.id, refreshBalance])
 
   useEffect(() => {
     const handleFullscreenChange = () => {

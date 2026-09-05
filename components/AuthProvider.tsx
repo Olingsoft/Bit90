@@ -8,7 +8,10 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { clearSession, getSession, saveSession, type User } from '@/lib/auth'
+import { API_URL } from '@/lib/api'
+import { clearSession, getSession, getToken, saveSession, type User } from '@/lib/auth'
+
+export const BALANCE_UPDATED_EVENT = 'bit90:balance-updated'
 
 interface AuthContextValue {
   user: User | null
@@ -16,6 +19,8 @@ interface AuthContextValue {
   isLoading: boolean
   login: (token: string, user: User) => void
   logout: () => void
+  updateUser: (patch: Partial<User>) => void
+  refreshBalance: () => Promise<number | null>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -51,8 +56,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...patch }
+      const activeToken = getToken()
+      if (activeToken) saveSession(activeToken, next)
+      return next
+    })
+  }, [])
+
+  const refreshBalance = useCallback(async () => {
+    const activeToken = token || getToken()
+    if (!activeToken) return null
+
+    try {
+      const res = await fetch(`${API_URL}users/me`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
+        cache: 'no-store',
+      })
+      if (!res.ok) return null
+
+      const data = await res.json()
+      const nextBalance = Number(data.balance)
+      if (!Number.isFinite(nextBalance)) return null
+
+      updateUser({
+        phone: data.phone ?? undefined,
+        balance: nextBalance,
+      })
+      return nextBalance
+    } catch {
+      return null
+    }
+  }, [token, updateUser])
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, isLoading, login, logout, updateUser, refreshBalance }}
+    >
       {children}
     </AuthContext.Provider>
   )

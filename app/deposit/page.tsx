@@ -137,7 +137,7 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DepositPage() {
-  const { user, token, login, isLoading: authLoading } = useAuth();
+  const { user, token, updateUser, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [phone, setPhone] = useState("");
@@ -209,8 +209,11 @@ export default function DepositPage() {
                 if (tx.status === "completed") {
                   console.log("Transaction verified as completed!");
                   setIsPolling(false);
-                  if (user && tx.balanceAfter !== undefined && activeToken) {
-                    login(activeToken, { ...user, balance: tx.balanceAfter });
+                  if (typeof tx.balanceAfter === "number") {
+                    updateUser({ balance: tx.balanceAfter });
+                  }
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("bit90:balance-updated"));
                   }
                   setToast({
                     message: "Deposit completed successfully!",
@@ -248,8 +251,11 @@ export default function DepositPage() {
             if (transaction.status === "completed") {
               console.log("Transaction completed successfully!");
               setIsPolling(false);
-              if (user && transaction.balanceAfter !== undefined && activeToken) {
-                login(activeToken, { ...user, balance: transaction.balanceAfter });
+              if (typeof transaction.balanceAfter === "number") {
+                updateUser({ balance: transaction.balanceAfter });
+              }
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("bit90:balance-updated"));
               }
               setToast({
                 message: "Deposit completed successfully!",
@@ -274,7 +280,7 @@ export default function DepositPage() {
     return () => {
       clearInterval(pollInterval);
     };
-  }, [transactionId, isPolling, token, user, login]);
+  }, [transactionId, isPolling, token, updateUser]);
 
   // While auth is hydrating, show a full-screen spinner so the page
   // content never flashes to an unauthenticated visitor.
