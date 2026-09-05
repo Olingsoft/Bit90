@@ -225,16 +225,7 @@ export default function DepositPage() {
                 });
                 return;
               }
-              if (tx?.status === "failed") {
-                if (cancelled) return;
-                setIsPolling(false);
-                setToast(null);
-                setStatus({
-                  type: "error",
-                  message: verifyData.message || tx.resultDesc || "Transaction failed or was cancelled.",
-                });
-                return;
-              }
+              // Ignore verify "failed" — STK Query often reports 1037/4999 while PIN is still pending.
             }
           } catch (verifyErr) {
             console.warn("Active verify check error:", verifyErr);
@@ -261,7 +252,7 @@ export default function DepositPage() {
             });
             return;
           }
-          if (data.status === "failed") {
+          if (data.status === "failed" && data.final === true) {
             if (cancelled) return;
             setIsPolling(false);
             setToast(null);
