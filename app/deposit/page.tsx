@@ -89,7 +89,9 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#1A1A1A] leading-snug">Deposit Initiated 🎉</p>
+            <p className="text-sm font-semibold text-[#1A1A1A] leading-snug">
+              {isPolling ? "Waiting for M-Pesa..." : "Deposit Successful"}
+            </p>
             <p className="text-xs text-[#666666] mt-0.5 leading-relaxed">{message}</p>
             {balance !== undefined && (
               <p className="text-xs font-semibold text-[#22D67A] mt-1">
@@ -137,7 +139,7 @@ function SuccessToast({ message, balance, isPolling, onDone }: ToastProps) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DepositPage() {
-  const { user, token, updateUser, isLoading: authLoading } = useAuth();
+  const { user, token, updateUser, refreshBalance, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [phone, setPhone] = useState("");
@@ -168,68 +170,70 @@ export default function DepositPage() {
     }
   }, [user]);
 
-  // Poll transaction status
+  // Poll until M-Pesa reports a final SUCCESS or FAIL. Do not treat "still processing" as failed.
   useEffect(() => {
     if (!transactionId || !isPolling) {
       return;
     }
 
-    console.log("Starting transaction polling for:", transactionId);
-
+    let cancelled = false;
     let pollCount = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const pollInterval = setInterval(async () => {
+    const applyLiveBalance = (balance: unknown) => {
+      const next = Number(balance);
+      if (!Number.isFinite(next)) return;
+      updateUser({ balance: next });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("bit90:balance-updated"));
+      }
+    };
+
+    const authHeaders = () => {
+      const activeToken = token || getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+      return headers;
+    };
+
+    const tick = async () => {
+      if (cancelled) return;
+      pollCount += 1;
+      const headers = authHeaders();
+
       try {
-        pollCount += 1;
-        const activeToken = token || getToken();
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-        if (activeToken) {
-          headers["Authorization"] = `Bearer ${activeToken}`;
-        }
-
-        // Hit Safaricom STK Query at most every ~15s (every 3rd poll) and only after
-        // the first 15s so the callback has time to arrive. Polling every 3s caused
-        // spike-arrest errors and false FAILED statuses (ResultCode 4999).
-        const shouldQuerySafaricom = pollCount >= 3 && pollCount % 3 === 0;
-
-        if (shouldQuerySafaricom) {
+        // Query Safaricom only after ~12s, then about every 12s.
+        if (pollCount >= 4 && pollCount % 4 === 0) {
           try {
             const verifyRes = await fetch(`${API_URL}users/mpesa/verify`, {
               method: "POST",
               headers,
               body: JSON.stringify({ transactionId }),
             });
-
             if (verifyRes.ok) {
               const verifyData = await verifyRes.json();
               const tx = verifyData.transaction;
-              if (tx) {
-                if (tx.status === "completed") {
-                  console.log("Transaction verified as completed!");
-                  setIsPolling(false);
-                  if (typeof tx.balanceAfter === "number") {
-                    updateUser({ balance: tx.balanceAfter });
-                  }
-                  if (typeof window !== "undefined") {
-                    window.dispatchEvent(new Event("bit90:balance-updated"));
-                  }
-                  setToast({
-                    message: "Deposit completed successfully!",
-                    balance: tx.balanceAfter,
-                  });
-                  return;
-                } else if (tx.status === "failed") {
-                  console.log("Transaction verified as failed");
-                  setIsPolling(false);
-                  setStatus({
-                    type: "error",
-                    message: verifyData.message || "Transaction failed or was cancelled.",
-                  });
-                  setToast(null);
-                  return;
-                }
+              if (tx?.status === "completed") {
+                applyLiveBalance(verifyData.balance ?? tx.balanceAfter);
+                await refreshBalance();
+                if (cancelled) return;
+                setIsPolling(false);
+                setStatus({ type: "", message: "" });
+                setToast({
+                  message: "Deposit completed successfully!",
+                  balance: Number(verifyData.balance ?? tx.balanceAfter),
+                });
+                return;
+              }
+              if (tx?.status === "failed") {
+                if (cancelled) return;
+                setIsPolling(false);
+                setToast(null);
+                setStatus({
+                  type: "error",
+                  message: verifyData.message || tx.resultDesc || "Transaction failed or was cancelled.",
+                });
+                return;
               }
             }
           } catch (verifyErr) {
@@ -237,50 +241,53 @@ export default function DepositPage() {
           }
         }
 
-        // 2. Passive check against user's transactions list (callback is source of truth)
-        const res = await fetch(`${API_URL}users/transactions`, {
+        const statusRes = await fetch(`${API_URL}users/deposits/${transactionId}/status`, {
           method: "GET",
           headers,
+          cache: "no-store",
         });
 
-        if (res.ok) {
-          const transactions = await res.json();
-          const transaction = transactions.find((t: any) => t._id === transactionId || t.id === transactionId);
-
-          if (transaction) {
-            if (transaction.status === "completed") {
-              console.log("Transaction completed successfully!");
-              setIsPolling(false);
-              if (typeof transaction.balanceAfter === "number") {
-                updateUser({ balance: transaction.balanceAfter });
-              }
-              if (typeof window !== "undefined") {
-                window.dispatchEvent(new Event("bit90:balance-updated"));
-              }
-              setToast({
-                message: "Deposit completed successfully!",
-                balance: transaction.balanceAfter,
-              });
-            } else if (transaction.status === "failed") {
-              console.log("Transaction failed");
-              setIsPolling(false);
-              setStatus({
-                type: "error",
-                message: "Transaction failed. Please try again.",
-              });
-              setToast(null);
-            }
+        if (statusRes.ok) {
+          const data = await statusRes.json();
+          if (data.status === "completed") {
+            applyLiveBalance(data.balance);
+            await refreshBalance();
+            if (cancelled) return;
+            setIsPolling(false);
+            setStatus({ type: "", message: "" });
+            setToast({
+              message: "Deposit completed successfully!",
+              balance: Number(data.balance),
+            });
+            return;
+          }
+          if (data.status === "failed") {
+            if (cancelled) return;
+            setIsPolling(false);
+            setToast(null);
+            setStatus({
+              type: "error",
+              message: data.resultDesc || "Transaction failed or was cancelled.",
+            });
+            return;
           }
         }
       } catch (err) {
         console.error("Polling error:", err);
       }
-    }, 5000);
+
+      if (!cancelled) {
+        timer = setTimeout(tick, 3000);
+      }
+    };
+
+    void tick();
 
     return () => {
-      clearInterval(pollInterval);
+      cancelled = true;
+      if (timer) clearTimeout(timer);
     };
-  }, [transactionId, isPolling, token, updateUser]);
+  }, [transactionId, isPolling, token, updateUser, refreshBalance]);
 
   // While auth is hydrating, show a full-screen spinner so the page
   // content never flashes to an unauthenticated visitor.
@@ -444,23 +451,29 @@ export default function DepositPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={authLoading || isLoading || !phone || !amount}
+              disabled={authLoading || isLoading || isPolling || !phone || !amount}
               className="w-full bg-[#22D67A] hover:bg-[#1CBE6B] disabled:bg-[#D1D1D1] disabled:text-[#999999] text-[#FFFFFF] font-bold text-base py-4 rounded-xl transition duration-150 flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg shadow-[#22D67A]/10"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              {isLoading ? (
+              {isLoading || isPolling ? (
                 <>
                   <svg className="animate-spin h-5 w-5 text-[#FFFFFF]" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <span>Sending Prompt...</span>
+                  <span>{isPolling ? "Waiting for confirmation..." : "Sending Prompt..."}</span>
                 </>
               ) : (
                 <span>Complete Deposit · KSh {amount || 0}</span>
               )}
             </button>
           </form>
+
+          {isPolling && (
+            <div className="mt-4 p-3.5 rounded-xl text-center text-sm font-semibold border bg-[#22D67A]/10 border-[#22D67A]/30 text-[#1A1A1A]">
+              Transaction is still processing. Enter your M-Pesa PIN and wait here until it succeeds or fails.
+            </div>
+          )}
 
           {/* Error Message */}
           {status.type === "error" && status.message && (
