@@ -84,8 +84,8 @@ export default function Header({ query, setQuery }: HeaderProps) {
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#666666] shrink-0">
-          <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Sports</a>
-          <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Live</a>
+          <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Aviator</a>
+          <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Bit90 trading</a>
         </nav>
 
         {/* RIGHT ACTION BUTTONS */}
