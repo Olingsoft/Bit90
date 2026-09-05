@@ -240,7 +240,7 @@ export default function DepositPage() {
 
         if (statusRes.ok) {
           const data = await statusRes.json();
-          if (data.status === "completed") {
+          if (data.status === "completed" || data.credited) {
             applyLiveBalance(data.balance);
             await refreshBalance();
             if (cancelled) return;
@@ -262,6 +262,7 @@ export default function DepositPage() {
             });
             return;
           }
+          // pending / early "failed" while PIN is still being processed — keep waiting
         }
       } catch (err) {
         console.error("Polling error:", err);

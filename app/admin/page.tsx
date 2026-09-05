@@ -269,7 +269,7 @@ export default function AdminPage() {
       <div className="flex h-screen items-center justify-center bg-slate-50 text-slate-500 dark:bg-[#0a0d12] dark:text-slate-400">
         <div className="flex flex-col items-center gap-3">
           <RefreshCw className="h-6 w-6 animate-spin" />
-          Loading dashboard...
+        Loading dashboard...
         </div>
       </div>
     )
@@ -314,18 +314,18 @@ export default function AdminPage() {
                 {items.map(({ key, label }) => {
                   const Icon = NAV_ICONS[key]
                   return (
-                    <button
-                      key={key}
+            <button
+              key={key}
                       onClick={() => navigateTo(key)}
                       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
-                        activePage === key
+                activePage === key
                           ? 'bg-sky-500/10 text-sky-600 ring-1 ring-inset ring-sky-500/30 dark:text-sky-300'
                           : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-slate-200'
-                      }`}
-                    >
+              }`}
+            >
                       <Icon size={17} />
-                      {label}
-                    </button>
+              {label}
+            </button>
                   )
                 })}
               </div>
@@ -375,30 +375,30 @@ export default function AdminPage() {
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
                 className="w-44 rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs outline-none focus:ring-1 focus:ring-sky-500 dark:border-white/10 dark:bg-white/[0.03] lg:w-56"
-              />
-            </div>
+                  />
+                </div>
 
-            <button
+                    <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/[0.05]"
               title="Toggle theme"
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+                    </button>
 
-            <button
+                    <button
               onClick={() => navigateTo('notifications')}
               className="relative rounded-lg border border-slate-200 p-2 text-slate-500 dark:border-white/10"
             >
               <Bell size={16} />
               <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-rose-500" />
-            </button>
+                      </button>
 
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-slate-700 dark:text-slate-200">{data?.admin?.phone ?? 'Administrator'}</p>
               <p className="text-[10px] text-sky-500 dark:text-sky-400">{ROLE_LABELS[adminRole]}</p>
             </div>
-          </div>
+        </div>
         </header>
 
         <div className="flex-1 space-y-6 p-4 sm:p-6">{renderContent()}</div>
