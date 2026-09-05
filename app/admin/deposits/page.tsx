@@ -48,17 +48,14 @@ export default function DepositsPage() {
     return null
   }
 
-  const adminRole = normalizeAdminRole(data?.admin?.role)
-  const canApprove = hasPermission(adminRole, 'deposits.approve')
-
   return (
     <AdminLayout currentPage="deposits" pageTitle="Deposits">
       <div className="mx-auto max-w-7xl">
         <SectionHeader
           title="Deposits"
-          description={canApprove ? "Monitor and approve deposit transactions." : "View deposit transactions."}
+          description="Monitor incoming deposit transactions. Confirmed payments are automatically approved and credited to user balances."
         />
-        <DepositsSection canApprove={canApprove} />
+        <DepositsSection />
       </div>
     </AdminLayout>
   )

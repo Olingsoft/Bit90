@@ -35,7 +35,6 @@ export type Permission =
   | 'kyc.reject'
   | 'kyc.resubmit'
   | 'deposits.view'
-  | 'deposits.approve'
   | 'withdrawals.view'
   | 'withdrawals.approve'
   | 'withdrawals.reject'

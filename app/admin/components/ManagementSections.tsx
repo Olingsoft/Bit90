@@ -146,7 +146,7 @@ export function KycSection({ canApprove = false, canReject = false, canRequestRe
   )
 }
 
-export function DepositsSection({ canApprove = false }: { canApprove?: boolean }) {
+export function DepositsSection() {
   const [search, setSearch] = React.useState('')
   const [deposits, setDeposits] = React.useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -172,7 +172,7 @@ export function DepositsSection({ canApprove = false }: { canApprove?: boolean }
     <div className="space-y-4">
       <SectionHeader
         title="Deposits"
-        description={`Monitor deposit transactions. ${deposits.length} total records.`}
+        description={`Monitor deposit transactions. Confirmed payments are credited automatically (${deposits.length} total records).`}
         action={<ExportButtons />}
       />
       <SearchInput value={search} onChange={setSearch} placeholder="Filter by phone, reference..." />
@@ -226,10 +226,9 @@ export function DepositsSection({ canApprove = false }: { canApprove?: boolean }
               {
                 key: 'actions',
                 label: 'Actions',
-                render: (r) => (
+                render: () => (
                   <div className="flex gap-1">
                     <ActionButton variant="secondary">View</ActionButton>
-                    {canApprove && r.status === 'pending' && <ActionButton>Approve</ActionButton>}
                   </div>
                 ),
               },

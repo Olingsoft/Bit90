@@ -10,7 +10,6 @@ const ALL_PERMISSIONS: Permission[] = [
   'kyc.reject',
   'kyc.resubmit',
   'deposits.view',
-  'deposits.approve',
   'withdrawals.view',
   'withdrawals.approve',
   'withdrawals.reject',
