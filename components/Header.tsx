@@ -75,7 +75,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-[#FFFFFF]/95 backdrop-blur border-b border-[#E5E5E5]">
+    <header className="sticky top-0 z-20 bg-[#FFFFFF] border-b border-[#E5E5E5]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2 sm:gap-4">
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
@@ -111,17 +111,15 @@ export default function Header({ query, setQuery }: HeaderProps) {
                 </span>
               </div>
 
-              {/* PROFILE ICON — navigates directly to /account (hidden on mobile) */}
+              {/* MY ACCOUNT LINK — navigates directly to /account (hidden on mobile) */}
               <Link
                 href="/account"
                 id="account-profile-btn"
                 title="My Profile & Transactions"
                 aria-label="My Profile"
-                className="hidden md:block w-8 h-8 rounded-full bg-gradient-to-br from-[#22D67A] to-[#1CBE6B] hover:from-[#1CBE6B] hover:to-[#16A85C] transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#22D67A]/20 hover:shadow-[#22D67A]/35 hover:scale-105 active:scale-95"
+                className="hidden md:inline-flex bg-[#F9F9F9] border border-[#E5E5E5] hover:border-[#22D67A]/50 transition-colors text-[#1A1A1A] font-medium px-3 py-1.5 rounded-md text-[13px]"
               >
-                <svg className="w-[18px] h-[18px] text-[#120D08]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                </svg>
+                My Account
               </Link>
             </>
           ) : (
