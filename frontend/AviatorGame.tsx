@@ -340,11 +340,58 @@ interface LiveState {
 }
 
 interface HistoryItem {
-  roundId: string;
-  crashPoint: number;
-  endedAt: string;
-  serverSeed?: string;
-  hash?: string;
+  roundId?: string
+  id?: string
+  crashPoint: number
+  endedAt?: string
+  crashedAt?: string
+  createdAt?: string
+  serverSeed?: string
+  hash?: string
+}
+
+const HISTORY_CACHE_KEY = "bit90:aviator-crash-history"
+const HISTORY_LIMIT = 50
+
+function historyTime(item: HistoryItem) {
+  return item.endedAt || item.crashedAt || item.createdAt || ""
+}
+
+function mapHistoryItems(rounds: HistoryItem[]) {
+  return rounds
+    .filter((item) => Number.isFinite(Number(item?.crashPoint)) && Number(item.crashPoint) > 0)
+    .sort((a, b) => {
+      const aTime = historyTime(a)
+      const bTime = historyTime(b)
+      if (aTime && bTime) return aTime > bTime ? -1 : aTime < bTime ? 1 : 0
+      return 0
+    })
+    .slice(0, HISTORY_LIMIT)
+    .map((item) => ({
+      crashPoint: Number(Number(item.crashPoint).toFixed(2)),
+      roundId: String(item.roundId || item.id || `${item.crashPoint}-${historyTime(item)}`),
+    }))
+}
+
+function readCachedHistory() {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(HISTORY_CACHE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as { crashPoint: number; roundId: string }[]
+    return Array.isArray(parsed) ? parsed.filter((item) => Number.isFinite(item.crashPoint)) : []
+  } catch {
+    return []
+  }
+}
+
+function writeCachedHistory(items: { crashPoint: number; roundId: string }[]) {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(HISTORY_CACHE_KEY, JSON.stringify(items.slice(0, HISTORY_LIMIT)))
+  } catch {
+    // ignore quota / private mode
+  }
 }
 
 export default function AviatorGame() {
@@ -354,7 +401,7 @@ export default function AviatorGame() {
   const [phase, setPhase] = useState<Phase>("waiting");
   const [multiplier, setMultiplier] = useState<number>(1.0);
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
-  const [history, setHistory] = useState<number[]>([]);
+  const [history, setHistory] = useState<{ crashPoint: number; roundId: string }[]>(() => readCachedHistory());
   const [countdown, setCountdown] = useState<number>(5);
   const [shake, setShake] = useState<boolean>(false);
   const [roundId, setRoundId] = useState<string | null>(null);
@@ -476,17 +523,16 @@ export default function AviatorGame() {
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const response = await fetch(`${API_URL}aviator/history`);
+        const response = await fetch(`${API_URL}aviator/history`, { cache: "no-store" });
         if (!response.ok) throw new Error(`History request failed: ${response.status}`);
         const rounds = (await response.json()) as HistoryItem[];
-        const items = rounds
-          .filter((item) => typeof item?.crashPoint === "number" && item.endedAt != null)
-          .sort((a, b) => (a.endedAt > b.endedAt ? -1 : a.endedAt < b.endedAt ? 1 : 0))
-          .map((item) => Number(item.crashPoint.toFixed(2)));
-        setHistory(items);
+        const items = mapHistoryItems(Array.isArray(rounds) ? rounds : []);
+        if (items.length > 0) {
+          setHistory(items);
+          writeCachedHistory(items);
+        }
       } catch (error) {
         console.error("Failed to load Aviator history", error);
-        setHistory([]);
       }
     };
 
@@ -498,7 +544,16 @@ export default function AviatorGame() {
 
     const handleHistoryEvent = (value: HistoryItem) => {
       if (typeof value.crashPoint !== "number") return;
-      setHistory((prev) => [Number(value.crashPoint.toFixed(2)), ...prev].slice(0, 50));
+      const nextItem = {
+        crashPoint: Number(value.crashPoint.toFixed(2)),
+        roundId: String(value.roundId || value.id || `${value.crashPoint}-${historyTime(value)}-${Date.now()}`),
+      };
+      setHistory((prev) => {
+        const withoutDup = prev.filter((item) => item.roundId !== nextItem.roundId);
+        const next = [nextItem, ...withoutDup].slice(0, HISTORY_LIMIT);
+        writeCachedHistory(next);
+        return next;
+      });
     };
 
     socket.on("aviator:history", handleHistoryEvent);
@@ -541,15 +596,15 @@ export default function AviatorGame() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A1F]" />
             History
           </span>
-          {history.map((h, i) => {
-            const color = colorForMultiplier(h);
+          {history.map((h) => {
+            const color = colorForMultiplier(h.crashPoint);
             return (
               <span
-                key={i}
+                key={h.roundId}
                 className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-extrabold whitespace-nowrap bg-[#120D08] border border-[#3A2818] shadow-sm ${color.text}`}
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                {h.toFixed(2)}x
+                {h.crashPoint.toFixed(2)}x
               </span>
             );
           })}

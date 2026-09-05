@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
+import { withLocale } from "@/lib/locale";
 
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -157,7 +158,7 @@ export default function DepositPage() {
   // Unauthenticated visitors are immediately sent to login.
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/login?from=/deposit");
+      router.replace(withLocale("/login?from=/deposit"));
     }
   }, [authLoading, user, router]);
 
@@ -359,7 +360,7 @@ export default function DepositPage() {
           message={toast.message}
           balance={toast.balance}
           isPolling={isPolling}
-          onDone={() => router.push("/aviator")}
+          onDone={() => router.push(withLocale("/aviator"))}
         />
       )}
 

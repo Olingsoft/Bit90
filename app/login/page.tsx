@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { API_URL } from '@/lib/api'
+import { withLocale } from '@/lib/locale'
 import Image from 'next/image'
 import Logo from '@/public/bit90logo.png'
 
@@ -20,7 +21,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace('/')
+      router.replace(withLocale('/'))
     }
   }, [authLoading, user, router])
 
@@ -44,7 +45,7 @@ function LoginForm() {
       }
 
       login(data.token, data.user)
-      router.push(redirectTo)
+      router.push(withLocale(redirectTo))
     } catch {
       setError('Unable to connect to server')
     } finally {
@@ -107,7 +108,7 @@ function LoginForm() {
 
         <p className="text-center text-[#666666] text-sm mt-6">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-[#22D67A] hover:text-[#1CBE6B] font-medium">
+          <Link href={withLocale('/register')} className="text-[#22D67A] hover:text-[#1CBE6B] font-medium">
             Sign Up
           </Link>
         </p>

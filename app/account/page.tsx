@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
+import { withLocale } from "@/lib/locale";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Transaction {
@@ -166,7 +167,7 @@ export default function AccountPage() {
   // Auth guard
   useEffect(() => {
     if (typeof window !== "undefined" && !getToken()) {
-      router.push("/login");
+      router.push(withLocale("/login"));
     }
   }, [router]);
 
@@ -214,7 +215,7 @@ export default function AccountPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
         {/* Back */}
-        <Link href="/" className="inline-flex items-center gap-1.5 text-[12px] text-[#666666] hover:text-[#1A1A1A] transition-colors mb-7">
+        <Link href={withLocale("/")} className="inline-flex items-center gap-1.5 text-[12px] text-[#666666] hover:text-[#1A1A1A] transition-colors mb-7">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
           </svg>
@@ -238,13 +239,13 @@ export default function AccountPage() {
               </div>
               <div className="flex gap-2 mb-1">
                 <Link
-                  href="/deposit"
+                  href={withLocale("/deposit")}
                   className="px-3.5 py-1.5 rounded-lg bg-[#F5A623] hover:bg-[#E0961C] transition-colors text-[#FFFFFF] text-[12px] font-bold"
                 >
                   Deposit
                 </Link>
                 <Link
-                  href="/withdraw"
+                  href={withLocale("/withdraw")}
                   className="px-3.5 py-1.5 rounded-lg bg-[#22D67A]/10 hover:bg-[#22D67A]/20 border border-[#22D67A]/30 transition-colors text-[#22D67A] text-[12px] font-bold"
                 >
                   Withdraw
@@ -343,7 +344,7 @@ export default function AccountPage() {
               <p className="text-[13px] font-semibold text-[#1A1A1A]">No transactions yet</p>
               <p className="text-[12px] text-[#666666]">Your deposits and withdrawals will appear here.</p>
               <Link
-                href="/deposit"
+                href={withLocale("/deposit")}
                 className="mt-2 px-4 py-1.5 rounded-lg bg-[#F5A623] hover:bg-[#E0961C] text-[12px] font-semibold text-[#FFFFFF] transition-colors"
               >
                 Make a Deposit

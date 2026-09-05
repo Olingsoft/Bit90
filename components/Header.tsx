@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
+import { withLocale } from '@/lib/locale'
 
 import Logo from '@/public/bit90logo.png'
 import Image from 'next/image'
@@ -71,21 +72,21 @@ export default function Header({ query, setQuery }: HeaderProps) {
 
   const handleLogout = () => {
     logout()
-    router.push('/login')
+    router.push(withLocale('/login'))
   }
 
   return (
     <header className="sticky top-0 z-20 bg-[#FFFFFF] border-b border-[#E5E5E5]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2 sm:gap-4">
         {/* LOGO */}
-        <Link href="/" className="flex items-center gap-1.5 shrink-0">
+        <Link href={withLocale('/')} className="flex items-center gap-1.5 shrink-0">
           <Image src={Logo} alt="Bit90 Logo" width={150} height={44} className="h-10 w-auto object-contain" priority />
         </Link>
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-5 text-[13px] font-medium text-[#666666] shrink-0">
-          <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Aviator</a>
-          <a className="hover:text-[#1A1A1A] transition-colors cursor-pointer">Bit90 trading</a>
+          <Link href={withLocale('/aviator')} className="hover:text-[#1A1A1A] transition-colors">Aviator</Link>
+          <Link href={withLocale('/trade')} className="hover:text-[#1A1A1A] transition-colors">Bit90 trading</Link>
         </nav>
 
         {/* RIGHT ACTION BUTTONS */}
@@ -113,7 +114,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
 
               {/* MY ACCOUNT LINK — navigates directly to /account (hidden on mobile) */}
               <Link
-                href="/account"
+                href={withLocale('/account')}
                 id="account-profile-btn"
                 title="My Profile & Transactions"
                 aria-label="My Profile"
@@ -125,14 +126,14 @@ export default function Header({ query, setQuery }: HeaderProps) {
           ) : (
             /* LOGIN BUTTON WHEN NOT LOGGED IN */
             <Link
-              href="/login"
+              href={withLocale('/login')}
               className="bg-[#22D67A] hover:bg-[#1CBE6B] transition-colors text-[#FFFFFF] font-semibold px-3.5 py-1.5 rounded-md text-[13px] shrink-0"
             >
               Login
             </Link>
           )}
 
-          <Link href="/deposit">
+          <Link href={withLocale('/deposit')}>
             <button className="bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#FFFFFF] font-semibold px-3.5 py-1.5 rounded-md text-[13px] cursor-pointer">
               Deposit
             </button>
@@ -195,14 +196,14 @@ export default function Header({ query, setQuery }: HeaderProps) {
           {user && (
             <div className="flex gap-2">
               <Link
-                href="/withdraw"
+                href={withLocale('/withdraw')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex-1 text-center bg-[#F9F9F9] border border-[#22D67A]/40 hover:border-[#22D67A] transition-colors text-[#22D67A] font-medium px-4 py-1.5 rounded-md text-[13px]"
               >
                 Withdraw
               </Link>
               <Link
-                href="/deposit"
+                href={withLocale('/deposit')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex-1 text-center bg-[#22D67A] hover:bg-[#1CBE6B] transition-colors text-[#FFFFFF] font-medium px-4 py-1.5 rounded-md text-[13px]"
               >
@@ -214,7 +215,7 @@ export default function Header({ query, setQuery }: HeaderProps) {
             {user && (
               <>
                 <Link
-                  href="/account"
+                  href={withLocale('/account')}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-[13px] text-[#666666] hover:text-[#1A1A1A] transition-colors"
                 >

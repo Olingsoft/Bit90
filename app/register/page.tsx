@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { API_URL } from '@/lib/api'
+import { withLocale } from '@/lib/locale'
 import Image from 'next/image'
 import Logo from '@/public/bit90logo.png'
 
@@ -20,7 +21,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace('/')
+      router.replace(withLocale('/'))
     }
   }, [authLoading, user, router])
 
@@ -58,7 +59,7 @@ export default function RegisterPage() {
   }
 
   const goToLogin = () => {
-    router.push('/login')
+    router.push(withLocale('/login'))
   }
 
   return (
@@ -151,7 +152,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-[#666666] text-sm mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-[#22D67A] hover:text-[#1CBE6B] font-medium">
+          <Link href={withLocale('/login')} className="text-[#22D67A] hover:text-[#1CBE6B] font-medium">
             Sign In
           </Link>
         </p>

@@ -189,7 +189,7 @@ function AviatorCard() {
             <span>4,821 playing now</span>
           </div>
           <Link
-            href="/aviator"
+            href="/en-ke/aviator"
             className="inline-flex items-center justify-center bg-[#FF5A1F] hover:bg-[#E64F17] transition-colors text-[#FFFFFF] font-semibold px-5 py-2.5 text-sm"
             style={{ fontFamily: BODY_FONT }}
           >
@@ -263,7 +263,7 @@ function Bit90TradeCard() {
             <span>3,150 trading now</span>
           </div>
           <Link
-            href="/trade"
+            href="/en-ke/trade"
             className="inline-flex items-center justify-center bg-[#E8A33D] hover:bg-[#D5922F] transition-colors text-[#FFFFFF] font-semibold px-5 py-2.5 text-sm"
             style={{ fontFamily: BODY_FONT }}
           >

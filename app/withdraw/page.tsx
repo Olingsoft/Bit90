@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { getToken } from "@/lib/auth";
 import { API_URL } from "@/lib/api";
+import { withLocale } from "@/lib/locale";
 
 const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 
@@ -162,7 +163,7 @@ export default function WithdrawPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (typeof window !== "undefined" && !getToken()) {
-      router.push("/login");
+      router.push(withLocale("/login"));
     }
   }, [router]);
 
@@ -231,7 +232,7 @@ export default function WithdrawPage() {
 
   const handleSuccessDone = useCallback(() => {
     setSuccessData(null);
-    router.push("/");
+    router.push(withLocale("/"));
   }, [router]);
 
   const handleErrorDone = useCallback(() => {
@@ -255,7 +256,7 @@ export default function WithdrawPage() {
 
       <main className="max-w-lg mx-auto px-4 py-10 sm:py-14">
         {/* Back link */}
-        <Link href="/" className="inline-flex items-center gap-2 text-[13px] text-[#8890A3] hover:text-[#ECEEF3] transition-colors mb-8">
+        <Link href={withLocale("/")} className="inline-flex items-center gap-2 text-[13px] text-[#8890A3] hover:text-[#ECEEF3] transition-colors mb-8">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
           </svg>
