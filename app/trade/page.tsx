@@ -6,25 +6,29 @@ import ChartToolbar from "@/components/trade/ChartToolbar";
 import SimulationPanel from "@/components/trade/SimulationPanel";
 import TradingChart from "@/components/trade/TradingChart";
 import MarketStats from "@/components/trade/MarketStats";
-import { SimulationEngine, Candle, Volatility } from "@/components/trade/SimulationEngine";
-import { Menu, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { Candle } from "@/components/trade/SimulationEngine";
+import { Menu, X, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { TradeDirection, ActiveTrade } from "@/components/trade/types";
+import { getCandles, getMarketState, Candle as MarketCandle, MarketState } from "@/lib/marketApi";
+import { useMarketSocket } from "@/hooks/useMarketSocket";
 
 export default function Trade() {
     const [query, setQuery] = useState("");
+    const [symbol, setSymbol] = useState("EURUSD");
     const [timeframe, setTimeframe] = useState("1m");
-    const [isSimulating, setIsSimulating] = useState(true);
-    const [volatility, setVolatility] = useState<Volatility>('Medium');
     const [balance, setBalance] = useState(10000.00);
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
     const [tradeAmount, setTradeAmount] = useState(100);
     const [tradeDuration, setTradeDuration] = useState(10);
     const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const [historicalData, setHistoricalData] = useState<Candle[]>([]);
     const [currentCandle, setCurrentCandle] = useState<Candle | undefined>(undefined);
+    const [currentPrice, setCurrentPrice] = useState<number>(0);
+    const [marketState, setMarketState] = useState<MarketState | null>(null);
 
-    const engineRef = useRef<SimulationEngine>(new SimulationEngine(100.00));
     const currentCandleRef = useRef<Candle | undefined>(undefined);
     const activeTradesRef = useRef<ActiveTrade[]>([]);
     
@@ -36,66 +40,111 @@ export default function Trade() {
     useEffect(() => {
         activeTradesRef.current = activeTrades;
     }, [activeTrades]);
-    
-    // Derived values
-    const intervalMs = useMemo(() => {
-        switch (timeframe) {
-            case '5s': return 5000;
-            case '15s': return 15000;
-            case '30s': return 30000;
-            case '1m': return 60000;
-            case '5m': return 300000;
-            default: return 60000;
-        }
-    }, [timeframe]);
 
-    const tickMs = useMemo(() => {
-        return 200; // Always fast
-    }, []);
-
-    const generateInitialData = () => {
-        engineRef.current = new SimulationEngine(100.00);
-        const now = Date.now();
-        const data = engineRef.current.generateHistoricalData(100, intervalMs, now, volatility);
-        setHistoricalData(data);
-        setCurrentCandle(data[data.length - 1]);
-    };
-
+    // Load historical candles from API
     useEffect(() => {
-        generateInitialData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [timeframe]); // Regenerate if timeframe changes
-
-    useEffect(() => {
-        if (!isSimulating) return;
-
-        const tickInterval = setInterval(() => {
-            const candle = currentCandleRef.current;
-            if (!candle) return;
-
-            const now = Date.now();
-            let lastCandleTime = candle.time * 1000;
-            
-            // Check if we need to close the candle
-            if (now - lastCandleTime >= intervalMs) {
-                // New candle
-                const nextCandle = engineRef.current.generateNextCandle(now, volatility);
-                setCurrentCandle(nextCandle);
-            } else {
-                // Live tick within current candle
-                const updatedCandle = engineRef.current.generateLiveTick(candle, volatility);
-                setCurrentCandle(updatedCandle);
+        const loadCandles = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const response = await getCandles(symbol, timeframe, 500);
+                const candles = response.candles.map((c: MarketCandle) => ({
+                    time: c.time,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
+                    volume: c.volume
+                }));
+                setHistoricalData(candles);
+                if (candles.length > 0) {
+                    setCurrentCandle(candles[candles.length - 1]);
+                }
+            } catch (err) {
+                console.error('Failed to load candles:', err);
+                setError('Failed to load market data');
+            } finally {
+                setIsLoading(false);
             }
-        }, tickMs);
+        };
+        loadCandles();
+    }, [symbol, timeframe]);
 
-        return () => clearInterval(tickInterval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isSimulating, intervalMs, tickMs]);
+    // Load market state
+    useEffect(() => {
+        const loadMarketState = async () => {
+            try {
+                const state = await getMarketState(symbol);
+                setMarketState(state);
+                setCurrentPrice(state.price);
+            } catch (err) {
+                console.error('Failed to load market state:', err);
+            }
+        };
+        loadMarketState();
+    }, [symbol]);
+
+    // WebSocket for real-time updates
+    const { isConnected } = useMarketSocket({
+        symbol,
+        onTick: (tick) => {
+            setCurrentPrice(tick.price);
+            // Update current candle if it exists
+            if (currentCandleRef.current) {
+                const updatedCandle = {
+                    ...currentCandleRef.current,
+                    close: tick.price,
+                    high: Math.max(currentCandleRef.current.high, tick.price),
+                    low: Math.min(currentCandleRef.current.low, tick.price),
+                    volume: currentCandleRef.current.volume + tick.volume
+                };
+                setCurrentCandle(updatedCandle);
+                currentCandleRef.current = updatedCandle;
+            }
+        },
+        onCandle: (candleData) => {
+            console.log('[TradePage] Received candle:', candleData);
+            if (candleData.timeframe === timeframe) {
+                const newCandle = candleData.candle;
+                console.log('[TradePage] New candle for timeframe:', timeframe, newCandle);
+                setCurrentCandle(newCandle);
+                currentCandleRef.current = newCandle;
+                // Add to historical data
+                setHistoricalData(prev => {
+                    const filtered = prev.filter(c => c.time !== newCandle.time);
+                    return [...filtered, newCandle].slice(-500);
+                });
+            }
+        }
+    });
 
     const handleReset = () => {
         setBalance(10000.00);
         setActiveTrades([]);
-        generateInitialData();
+        // Reload candles
+        const loadCandles = async () => {
+            setIsLoading(true);
+            try {
+                const response = await getCandles(symbol, timeframe, 500);
+                const candles = response.candles.map((c: MarketCandle) => ({
+                    time: c.time,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
+                    volume: c.volume
+                }));
+                setHistoricalData(candles);
+                if (candles.length > 0) {
+                    setCurrentCandle(candles[candles.length - 1]);
+                }
+            } catch (err) {
+                console.error('Failed to reload candles:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadCandles();
     };
 
     const placeTrade = (direction: TradeDirection) => {
@@ -234,27 +283,62 @@ export default function Trade() {
                     )}
                     
                     <div className="flex-1 relative bg-[#FFFFFF]">
-                        {historicalData.length > 0 && (
+                        {isLoading ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-sm text-[#666666]">Loading market data...</div>
+                            </div>
+                        ) : error ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                <p className="text-sm text-[#FF4757]">{error}</p>
+                                <button
+                                    onClick={handleReset}
+                                    className="px-4 py-2 bg-[#22D67A] text-[#FFFFFF] rounded-lg text-sm font-medium"
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        ) : historicalData.length > 0 ? (
                             <TradingChart 
                                 key={timeframe} 
                                 data={historicalData} 
                                 currentTick={currentCandle}
                                 activeTrades={activeTrades}
                             />
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <p className="text-sm text-[#666666]">No data available</p>
+                            </div>
                         )}
                     </div>
                     
-                    <MarketStats 
-                        currentCandle={currentCandle} 
-                        volatilityPct={volatility === 'Low' ? '0.1%' : volatility === 'Medium' ? '0.3%' : '0.6%'} 
-                    />
+                    {/* Current Price Display */}
+                    <div className="bg-[#FFFFFF] border-t border-[#E5E5E5] px-4 py-2 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs text-[#666666]">{symbol}</span>
+                            <span className="text-lg font-bold tabular-nums" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                {currentPrice.toFixed(5)}
+                            </span>
+                            {marketState && (
+                                <span className={`text-xs font-medium flex items-center gap-1 ${
+                                    marketState.trend > 0 ? 'text-[#22D67A]' : marketState.trend < 0 ? 'text-[#FF4757]' : 'text-[#666666]'
+                                }`}>
+                                    {marketState.trend > 0 ? <ArrowUpRight className="w-3 h-3" /> : marketState.trend < 0 ? <ArrowDownRight className="w-3 h-3" /> : null}
+                                    {marketState.regime}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-[#666666]">
+                            <span>Spread: {(currentPrice * 0.0001).toFixed(5)}</span>
+                            <span>Vol: {marketState?.volatility?.toFixed(6) || 'N/A'}</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Desktop Panel */}
-                <div className="hidden lg:block w-80 shrink-0">
+                <div className="hidden lg:block w-80 shrink-0 bg-[#FFFFFF] border-l border-[#E5E5E5]">
                     <SimulationPanel
                         balance={balance}
-                        currentPrice={currentCandle?.close || 100.00}
+                        currentPrice={currentPrice || currentCandle?.close || 0}
                         tradeAmount={tradeAmount}
                         setTradeAmount={setTradeAmount}
                         tradeDuration={tradeDuration}
