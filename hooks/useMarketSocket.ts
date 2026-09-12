@@ -28,7 +28,7 @@ export function useMarketSocket({ symbol, onTick, onCandle }: MarketSocketOption
       console.log('[useMarketSocket] Connected');
       setIsConnected(true);
       // Subscribe to symbol
-      socket.emit('subscribe', { symbol: symbolRef.current });
+      socket.emit('market:subscribe', { symbol: symbolRef.current });
     });
 
     socket.on('disconnect', () => {
@@ -60,12 +60,12 @@ export function useMarketSocket({ symbol, onTick, onCandle }: MarketSocketOption
     // Initial connection
     if (socket.connected) {
       setIsConnected(true);
-      socket.emit('subscribe', { symbol: symbolRef.current });
+      socket.emit('market:subscribe', { symbol: symbolRef.current });
     }
 
     return () => {
       // Unsubscribe from current symbol
-      socket.emit('unsubscribe', { symbol: symbolRef.current });
+      socket.emit('market:unsubscribe', { symbol: symbolRef.current });
       
       socket.off('connect');
       socket.off('disconnect');
@@ -78,8 +78,8 @@ export function useMarketSocket({ symbol, onTick, onCandle }: MarketSocketOption
   // Re-subscribe when symbol changes
   useEffect(() => {
     if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.emit('unsubscribe', { symbol: symbolRef.current });
-      socketRef.current.emit('subscribe', { symbol });
+      socketRef.current.emit('market:unsubscribe', { symbol: symbolRef.current });
+      socketRef.current.emit('market:subscribe', { symbol });
     }
   }, [symbol]);
 
