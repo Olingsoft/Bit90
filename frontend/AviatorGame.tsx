@@ -165,18 +165,27 @@ function useSmoothMultiplier(multiplier: number, phase: Phase) {
     if (phase !== "flying") return;
 
     let running = true;
-    const update = () => {
-      if (!running) return;
-      const target = targetRef.current;
-      const diff = target - currentRef.current;
+    let lastTime = performance.now();
 
-      if (Math.abs(diff) > 0.0005) {
-        currentRef.current += diff * 0.18;
+    const update = (now: number) => {
+      if (!running) return;
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      const target = targetRef.current;
+      const current = currentRef.current;
+      const diff = target - current;
+
+      if (diff > 0.0005) {
+        // Continuous smooth 60fps acceleration towards target
+        const step = Math.max(diff * 14 * dt, 0.003);
+        currentRef.current = Math.min(current + step, target);
         setSmooth(currentRef.current);
-      } else {
+      } else if (diff < -0.0005) {
         currentRef.current = target;
         setSmooth(target);
       }
+
       animFrameRef.current = requestAnimationFrame(update);
     };
 
@@ -199,27 +208,48 @@ function AviatorStageBackground({
   multiplier: number;
   crashPoint: number | null;
 }) {
-  const smoothMultiplier = useSmoothMultiplier(multiplier, phase);
-
   const isWaiting = phase === "waiting";
   const isCrashed = phase === "crashed";
-  const activeMultiplier = isWaiting ? 1.0 : isCrashed ? (crashPoint ?? multiplier) : smoothMultiplier;
+  const activeMultiplier = isWaiting ? 1.0 : isCrashed ? (crashPoint ?? multiplier) : multiplier;
   const accent = isCrashed ? "#FF4757" : colorForMultiplier(activeMultiplier).stroke;
 
-  const CLIMB_TARGET_MULTIPLIER = 2.0;
+  // Gentle aerodynamic cruising bob for authentic flight feel
+  const [cruiseOffset, setCruiseOffset] = useState({ y: 0, tilt: 0 });
+
+  useEffect(() => {
+    if (phase !== "flying") {
+      setCruiseOffset({ y: 0, tilt: 0 });
+      return;
+    }
+
+    let animId: number;
+    const updateBob = () => {
+      const t = Date.now() / 320;
+      setCruiseOffset({
+        y: Math.sin(t) * 4.5,
+        tilt: Math.sin(t * 0.85) * 2.2,
+      });
+      animId = requestAnimationFrame(updateBob);
+    };
+    animId = requestAnimationFrame(updateBob);
+    return () => cancelAnimationFrame(animId);
+  }, [phase]);
+
+  // Logarithmic progress so the flight corridor keeps climbing continuously
+  // From 1.00x to 15.00x+, progress climbs smoothly from 0 to 0.98.
   const progress = isWaiting
     ? 0
-    : Math.min(Math.max((activeMultiplier - 1) / (CLIMB_TARGET_MULTIPLIER - 1), 0), 1);
+    : Math.min(Math.max(Math.log(activeMultiplier) / Math.log(12), 0), 1);
 
   const startX = 45;
   const startY = 238;
-  const endX = startX + progress * 290;
-  const endY = startY - Math.pow(progress, 0.88) * 123;
-  const controlX = startX + progress * 150;
-  const controlY = startY - progress * 35;
+  const endX = startX + progress * 285;
+  const endY = startY - Math.pow(progress, 0.82) * 135 + cruiseOffset.y;
+  const controlX = startX + progress * 145;
+  const controlY = startY - progress * 40;
   const curvePath = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
   const areaPath = `${curvePath} L ${endX} ${startY} L ${startX} ${startY} Z`;
-  const planeAngle = -8 - progress * 22;
+  const planeAngle = -8 - progress * 18 + cruiseOffset.tilt;
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -296,7 +326,11 @@ function AviatorStageBackground({
 
         {!isWaiting && (
           <>
-            <path d={areaPath} fill="url(#aviatorCurveFill)" />
+            <path
+              d={areaPath}
+              fill="url(#aviatorCurveFill)"
+              className={isCrashed ? "aviator-curve-crash" : ""}
+            />
             <path
               d={curvePath}
               fill="none"
@@ -306,7 +340,10 @@ function AviatorStageBackground({
               filter="url(#aviatorGlow)"
               className={isCrashed ? "aviator-curve-crash" : "aviator-curve-live"}
             />
-            <g transform={`translate(${endX} ${endY}) rotate(${planeAngle})`}>
+            <g
+              transform={`translate(${endX} ${endY}) rotate(${planeAngle})`}
+              className={isCrashed ? "aviator-plane-crash" : "aviator-plane-live"}
+            >
               <AviatorPlaneIcon color={accent} isCrashed={isCrashed} isWaiting={false} />
             </g>
           </>
@@ -562,7 +599,8 @@ export default function AviatorGame() {
     };
   }, []);
 
-  const mColor = colorForMultiplier(multiplier);
+  const smoothMultiplier = useSmoothMultiplier(multiplier, phase);
+  const mColor = colorForMultiplier(phase === "crashed" ? (crashPoint ?? multiplier) : smoothMultiplier);
 
   return (
     <div className="min-h-screen w-full bg-[#120D08] text-[#F3E6D6]" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -584,7 +622,62 @@ export default function AviatorGame() {
         .aviator-rays { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; transform: translate(-50%, -50%); pointer-events: none; animation: aviator-spin 60s linear infinite; }
         .aviator-rays-fast { animation-duration: 20s; }
         .aviator-rays-crashed { opacity: 0.4; }
-        .aviator-crash-flash { position: absolute; inset: 0; background: rgba(255,71,87,0.25); pointer-events: none; animation: blink 0.4s ease-out 2; }
+        .aviator-crash-flash { position: absolute; inset: 0; background: rgba(255,71,87,0.28); pointer-events: none; animation: blink 0.4s ease-out 2; }
+
+        /* Authentic Spribe Flew-Away Rocket Animation */
+        @keyframes aviator-plane-flew-away {
+          0% {
+            transform: translate(0, 0) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          20% {
+            transform: translate(45px, -20px) scale(1.06) rotate(-10deg);
+            opacity: 0.95;
+          }
+          100% {
+            transform: translate(360px, -180px) scale(0.4) rotate(-35deg);
+            opacity: 0;
+          }
+        }
+        .aviator-plane-crash {
+          animation: aviator-plane-flew-away 0.75s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+          transform-origin: center center;
+        }
+
+        /* Plane live hovering */
+        @keyframes aviator-plane-hover {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-2px) rotate(-0.5deg); }
+        }
+        .aviator-plane-live {
+          animation: aviator-plane-hover 1.8s ease-in-out infinite;
+        }
+        .aviator-plane-idle {
+          animation: rise 0.5s ease-out;
+        }
+
+        /* Curve crash dissolve */
+        @keyframes aviator-curve-dissolve {
+          0% { opacity: 1; filter: drop-shadow(0 0 12px #FF4757); }
+          40% { opacity: 0.6; }
+          100% { opacity: 0; }
+        }
+        .aviator-curve-crash {
+          animation: aviator-curve-dissolve 0.8s ease-out forwards;
+        }
+        .aviator-curve-live {
+          transition: stroke 0.2s ease;
+        }
+
+        /* Flew away bold banner badge */
+        @keyframes aviator-flew-away-badge {
+          0% { transform: scale(0.75); opacity: 0; }
+          50% { transform: scale(1.08); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .aviator-flew-away-badge {
+          animation: aviator-flew-away-badge 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
       `}</style>
 
       <Header query={query} setQuery={setQuery} />
@@ -616,7 +709,7 @@ export default function AviatorGame() {
           <div className="lg:col-span-4 xl:col-span-4 order-2 lg:order-1 h-[480px] sm:h-[560px] lg:h-[620px]">
             <AviatorLiveBets
               phase={phase}
-              multiplier={multiplier}
+              multiplier={smoothMultiplier}
               roundId={roundId}
               user={user}
               userBets={userBets}
@@ -643,7 +736,7 @@ export default function AviatorGame() {
 
               {/* STAGE ANIMATION CANVAS */}
               <div className={`absolute inset-0 overflow-hidden ${shake ? "shake-anim" : ""}`}>
-                <AviatorStageBackground phase={phase} multiplier={multiplier} crashPoint={crashPoint} />
+                <AviatorStageBackground phase={phase} multiplier={smoothMultiplier} crashPoint={crashPoint} />
               </div>
 
               {/* MULTIPLIER / COUNTDOWN OVERLAY */}
@@ -660,18 +753,30 @@ export default function AviatorGame() {
                       {countdown}s
                     </h1>
                   </div>
+                ) : phase === "crashed" ? (
+                  <div className="text-center rise aviator-flew-away-badge">
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#E5484D]/25 border border-[#E5484D]/50 text-[#FF4757] font-extrabold text-xs sm:text-sm uppercase tracking-wider mb-2 shadow-lg shadow-[#E5484D]/25">
+                      <span className="w-2 h-2 rounded-full bg-[#FF4757] animate-ping" />
+                      Flew Away!
+                    </div>
+                    <h1
+                      className="text-6xl sm:text-8xl font-black tabular-nums text-[#FF4757] drop-shadow-[0_0_30px_rgba(255,71,87,0.7)]"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      {(crashPoint ?? multiplier).toFixed(2)}x
+                    </h1>
+                  </div>
                 ) : (
                   <div className="text-center rise">
                     <h1
-                      className={`text-6xl sm:text-8xl font-bold tabular-nums ${
-                        phase === "crashed" ? "text-[#E5484D]" : mColor.text
-                      }`}
+                      className={`text-6xl sm:text-8xl font-black tabular-nums ${mColor.text} drop-shadow-[0_0_20px_rgba(255,90,31,0.35)]`}
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      {multiplier.toFixed(2)}x
+                      {smoothMultiplier.toFixed(2)}x
                     </h1>
-                    <p className="mt-3 text-xs sm:text-sm tracking-widest uppercase text-[#9C8A73] font-bold">
-                      {phase === "crashed" ? "Flew away" : "In flight"}
+                    <p className="mt-2 text-xs sm:text-sm tracking-widest uppercase text-[#9C8A73] font-bold flex items-center justify-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+                      In flight
                     </p>
                   </div>
                 )}
@@ -684,7 +789,7 @@ export default function AviatorGame() {
                 panelIndex={1}
                 phase={phase}
                 roundId={roundId}
-                multiplier={multiplier}
+                multiplier={smoothMultiplier}
                 user={user}
                 token={token}
                 login={login}
@@ -696,7 +801,7 @@ export default function AviatorGame() {
                 panelIndex={2}
                 phase={phase}
                 roundId={roundId}
-                multiplier={multiplier}
+                multiplier={smoothMultiplier}
                 user={user}
                 token={token}
                 login={login}
