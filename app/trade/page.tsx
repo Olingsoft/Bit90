@@ -96,7 +96,7 @@ export default function Trade() {
                     close: tick.price,
                     high: Math.max(currentCandleRef.current.high, tick.price),
                     low: Math.min(currentCandleRef.current.low, tick.price),
-                    volume: currentCandleRef.current.volume + tick.volume
+                    volume: (currentCandleRef.current.volume ?? 0) + tick.volume
                 };
                 setCurrentCandle(updatedCandle);
                 currentCandleRef.current = updatedCandle;
